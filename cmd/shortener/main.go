@@ -63,7 +63,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Header().Set("Location", "longUrl")
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 
 		return
 	default:
