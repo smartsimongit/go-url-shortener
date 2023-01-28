@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"math/rand"
@@ -13,30 +14,13 @@ var (
 	repoMap map[string]string
 )
 
-func shortenerHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.Error(w, "404 not found.", http.StatusNotFound)
-		return
-	}
+func postHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "GET":
-		param := r.URL.Query().Get("id")
-		if param == "" {
-			http.Error(w, "The id parameter is missing", http.StatusBadRequest)
-			return
-		}
-		fmt.Println("GET METHOD with id ", param)
-		longUrl := repoMap[param]
-		fmt.Println("mvVar is ", longUrl)
-		if param == "" {
-			http.Error(w, "Short url not founded", http.StatusBadRequest)
-			return
-		}
-		w.Header().Set("Location", "longUrl")
-		w.WriteHeader(http.StatusOK)
-
-		return
 	case "POST":
+		if r.URL.Path != "/" {
+			http.Error(w, "url incorrect.", http.StatusBadRequest)
+			return
+		}
 		body, err := io.ReadAll(r.Body)
 		// обрабатываем ошибку
 		if err != nil {
@@ -59,12 +43,40 @@ func shortenerHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only GET and POST methods are supported", http.StatusBadRequest)
 	}
 }
+func getHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		vars := mux.Vars(r)
+		id, ok := vars["id"]
+		if !ok {
+			fmt.Println("id is missing in parameters")
+		}
+		fmt.Println(`id := `, id)
+
+		//TODO:
+
+		fmt.Println("GET METHOD with id ", id)
+		longUrl := repoMap[id]
+		fmt.Println("mvVar is ", longUrl)
+		if id == "" {
+			http.Error(w, "Short url not founded", http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Location", "longUrl")
+		w.WriteHeader(http.StatusOK)
+
+		return
+	default:
+		http.Error(w, "Only GET and POST methods are supported", http.StatusBadRequest)
+	}
+}
 
 func main() {
 	repoMap = map[string]string{}
-
-	http.HandleFunc("/", shortenerHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	r := mux.NewRouter()
+	r.HandleFunc("/{id}", getHandler)
+	r.HandleFunc("/", postHandler)
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
 func isUrlInvalid(s string) bool {
