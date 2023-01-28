@@ -3,7 +3,14 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
+	"math/rand"
 	"net/http"
+	"net/url"
+)
+
+var (
+	repoMap map[string]string
 )
 
 func shortenerHandler(w http.ResponseWriter, r *http.Request) {
@@ -19,28 +26,59 @@ func shortenerHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		fmt.Println("GET METHOD with id ", param)
+		longUrl := repoMap[param]
+		fmt.Println("mvVar is ", longUrl)
+		if param == "" {
+			http.Error(w, "Short url not founded", http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Location", "longUrl")
+		w.WriteHeader(http.StatusOK)
+
+		return
 	case "POST":
 		body, err := io.ReadAll(r.Body)
 		// обрабатываем ошибку
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		fmt.Println("POST METHOD with body ", body)
+		fmt.Println("POST METHOD with body ", string(body))
+		url := string(body)
+		if isUrlInvalid(url) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		genString := genString()
+		repoMap[genString] = url //TODO:Проверить, может такая связка уже есть
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(genString))
+		return
 	default:
-		fmt.Println(w, "Sorry, only GET and POST methods are supported.")
+		http.Error(w, "Only GET and POST methods are supported", http.StatusBadRequest)
 	}
 }
 
 func main() {
-	// маршрутизация запросов обработчику
+	repoMap = map[string]string{}
+
 	http.HandleFunc("/", shortenerHandler)
-	// запуск сервера с адресом localhost, порт 8080
-	http.ListenAndServe(":8080", nil)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-//ГОТОВ. Сервер должен быть доступен по адресу: http://localhost:8080.
-//ГОТОВО. Сервер должен предоставлять два эндпоинта: POST / и GET /{id}.
-//Эндпоинт POST / принимает в теле запроса строку URL для сокращения и возвращает ответ с кодом 201 и сокращённым URL в виде текстовой строки в теле.
-//Эндпоинт GET /{id} принимает в качестве URL-параметра идентификатор сокращённого URL и возвращает ответ с кодом 307 и оригинальным URL в HTTP-заголовке Location.
-//Нужно учесть некорректные запросы и возвращать для них ответ с кодом 400.
+func isUrlInvalid(s string) bool {
+	_, err := url.ParseRequestURI(s)
+	if err != nil {
+		return true
+	}
+	u, err := url.Parse(s)
+	if err != nil || u.Host == "" {
+		return true
+	}
+	return false
+}
+
+func genString() string {
+	return fmt.Sprint(rand.Int63n(1000)) //TODO: переделать на строку из 6 латинских символов и цифр
+}
