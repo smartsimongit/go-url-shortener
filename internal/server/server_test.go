@@ -1,7 +1,9 @@
 package server
 
 import (
+	"bytes"
 	"go-url-shortener/internal/storage"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,30 +16,29 @@ func Test_getHandler(t *testing.T) {
 		contentType string
 	}
 	tests := []struct {
-		name   string
-		reqID  string
-		server Server
-		want   want
+		name     string
+		reqID    string
+		longLink string
+		server   *Server
+		want     want
 	}{
 		{
-			name:  "negative test #1",
-			reqID: "sdf3p",
-			server: Server{
-				storage: storage.NewInMemory(),
-			},
+			name:     "test #1",
+			longLink: "https://practicum.yandex.ru/",
+			server:   New(storage.NewInMemory()),
 			want: want{
-				code: 400,
+				code: 201,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, "/"+tt.reqID, nil)
+			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(tt.longLink)))
 
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 			// определяем хендлер
-			h := http.HandlerFunc(tt.server.GetHandler)
+			h := http.HandlerFunc(tt.server.PostHandler)
 			// запускаем сервер
 			h.ServeHTTP(w, request)
 
@@ -46,6 +47,10 @@ func Test_getHandler(t *testing.T) {
 			// проверяем код ответа
 			if res.StatusCode != tt.want.code {
 				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
+			}
+			body, _ := io.ReadAll(res.Body)
+			if body == nil {
+				t.Errorf("body is empty")
 			}
 		})
 	}
