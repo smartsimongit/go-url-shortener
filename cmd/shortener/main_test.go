@@ -15,12 +15,12 @@ func Test_getHandler(t *testing.T) {
 	}
 	tests := []struct {
 		name  string
-		reqId string
+		reqID string
 		want  want
 	}{
 		{
 			name:  "negative test #1",
-			reqId: "sdf3p",
+			reqID: "sdf3p",
 			want: want{
 				code: 400,
 			},
@@ -28,7 +28,7 @@ func Test_getHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, "/"+tt.reqId, nil)
+			request := httptest.NewRequest(http.MethodGet, "/"+tt.reqID, nil)
 
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
@@ -36,8 +36,9 @@ func Test_getHandler(t *testing.T) {
 			h := http.HandlerFunc(getHandler)
 			// запускаем сервер
 			h.ServeHTTP(w, request)
-			res := w.Result()
 
+			res := w.Result()
+			defer res.Body.Close()
 			// проверяем код ответа
 			if res.StatusCode != tt.want.code {
 				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
