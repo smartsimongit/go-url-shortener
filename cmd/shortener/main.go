@@ -22,6 +22,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "url incorrect.", http.StatusBadRequest)
 			return
 		}
+		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
 		// обрабатываем ошибку
 		if err != nil {
