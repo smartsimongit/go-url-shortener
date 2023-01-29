@@ -35,8 +35,11 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "URL is invalid", http.StatusBadRequest)
 			return
 		}
+
 		genString := genString()
+
 		repoMap[genString] = url //TODO:Проверить, может такая связка уже есть
+
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte("http://localhost:8080/" + genString))
 		return
