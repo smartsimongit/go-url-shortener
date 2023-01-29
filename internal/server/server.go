@@ -2,18 +2,19 @@ package server
 
 import (
 	"github.com/gorilla/mux"
+	"go-url-shortener/internal/storage"
 	"go-url-shortener/internal/util"
 	"io"
 	"net/http"
 )
 
 type Server struct {
-	storage map[string]string
+	storage storage.Storage
 }
 
-func New(repoMap map[string]string) *Server {
+func New(storage storage.Storage) *Server {
 	return &Server{
-		storage: repoMap,
+		storage: storage,
 	}
 }
 
@@ -40,7 +41,11 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 		genString := util.GenString()
 
-		s.storage[genString] = url //TODO:Проверить, может такая связка уже есть
+		err = s.storage.Put(genString, url)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte("http://localhost:8080/" + genString))
@@ -59,9 +64,9 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "id is missing in parameters", http.StatusBadRequest)
 			return
 		}
-		longURL := s.storage[id]
-		if longURL == "" {
-			http.Error(w, "Short url not founded", http.StatusBadRequest)
+		longURL, err := s.storage.Get(id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		w.Header().Set("Location", longURL)
