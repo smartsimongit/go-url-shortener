@@ -86,5 +86,11 @@ func isUrlInvalid(s string) bool {
 }
 
 func genString() string {
-	return fmt.Sprint(rand.Int63n(1000)) //TODO: переделать на строку из 6 латинских символов и цифр
+	symbolsForGen := "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, 5)
+	for i := range b {
+		b[i] = symbolsForGen[rand.Intn(len(symbolsForGen))]
+	}
+	return string(b)
+
 }
