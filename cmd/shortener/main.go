@@ -39,7 +39,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(genString))
 		return
 	default:
-		http.Error(w, "Only GET and POST methods are supported", http.StatusBadRequest)
+		http.Error(w, "Only POST method is supported", http.StatusBadRequest)
 	}
 }
 func getHandler(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +60,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		return
 	default:
-		http.Error(w, "Only GET and POST methods are supported", http.StatusBadRequest)
+		http.Error(w, "Only GET method is supported", http.StatusBadRequest)
 	}
 }
 
