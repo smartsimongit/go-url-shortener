@@ -38,6 +38,11 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		repoMap[genString] = url //TODO:Проверить, может такая связка уже есть
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(genString))
+
+		fmt.Println(" !repoMap! \n")
+		for k, v := range repoMap {
+			fmt.Printf("%s -> %s\n", k, v)
+		}
 		return
 	default:
 		http.Error(w, "Only GET and POST methods are supported", http.StatusBadRequest)
@@ -49,20 +54,20 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id, ok := vars["id"]
 		if !ok {
-			fmt.Println("id is missing in parameters")
+			http.Error(w, "id is missing in parameters", http.StatusBadRequest)
+			return
 		}
 		fmt.Println(`id := `, id)
 
 		//TODO:
 
-		fmt.Println("GET METHOD with id ", id)
 		longUrl := repoMap[id]
 		fmt.Println("mvVar is ", longUrl)
 		if id == "" {
 			http.Error(w, "Short url not founded", http.StatusBadRequest)
-			return
+
 		}
-		w.Header().Set("Location", "longUrl")
+		w.Header().Set("Location", longUrl)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 
 		return
