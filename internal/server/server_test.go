@@ -9,6 +9,7 @@ import (
 	"testing"
 )
 
+// TODO: Дописать тесты
 func Test_getHandler(t *testing.T) {
 	type want struct {
 		code        int
