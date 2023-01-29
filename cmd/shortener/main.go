@@ -30,8 +30,8 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Println("POST METHOD with body ", string(body))
 		url := string(body)
-		if isUrlInvalid(url) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		if isURLInvalid(url) {
+			http.Error(w, "URL is invalid", http.StatusBadRequest)
 			return
 		}
 		genString := genString()
@@ -52,12 +52,12 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "id is missing in parameters", http.StatusBadRequest)
 			return
 		}
-		longUrl := repoMap[id]
-		if longUrl == "" {
+		longURL := repoMap[id]
+		if longURL == "" {
 			http.Error(w, "Short url not founded", http.StatusBadRequest)
 			return
 		}
-		w.Header().Set("Location", longUrl)
+		w.Header().Set("Location", longURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		return
 	default:
@@ -73,7 +73,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-func isUrlInvalid(s string) bool {
+func isURLInvalid(s string) bool {
 	_, err := url.ParseRequestURI(s)
 	if err != nil {
 		return true
