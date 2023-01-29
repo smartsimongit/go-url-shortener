@@ -15,6 +15,7 @@ var (
 )
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
+
 	switch r.Method {
 	case "POST":
 		if r.URL.Path != "/" {
@@ -36,7 +37,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		genString := genString()
 		repoMap[genString] = url //TODO:Проверить, может такая связка уже есть
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(genString))
+		w.Write([]byte("http://localhost:8080/" + genString))
 		return
 	default:
 		http.Error(w, "Only POST method is supported", http.StatusBadRequest)
