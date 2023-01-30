@@ -8,6 +8,12 @@ import (
 	"net/http"
 )
 
+var (
+	IncorrectPostUrl = "Incorrect Post request url"
+	IncorrectLongURL = "You send incorrect LongURL"
+	IdParamIsMissing = "Id is missing in parameters"
+)
+
 type Server struct {
 	storage storage.Storage
 }
@@ -23,32 +29,30 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		if r.URL.Path != "/" {
-			http.Error(w, "url incorrect.", http.StatusBadRequest)
+			http.Error(w, IncorrectPostUrl, http.StatusBadRequest)
 			return
 		}
 		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
-		// обрабатываем ошибку
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		url := string(body)
 		if util.IsURLInvalid(url) {
-			http.Error(w, "URL is invalid", http.StatusBadRequest)
+			http.Error(w, IncorrectLongURL, http.StatusBadRequest)
 			return
 		}
 
 		genString := util.GenString()
 
 		err = s.storage.Put(genString, url)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		if err == nil {
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte("http://localhost:8080/" + genString)) //TODO: OK
 			return
 		}
-
-		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("http://localhost:8080/" + genString))
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	default:
 		http.Error(w, "Only POST method is supported", http.StatusBadRequest)
@@ -58,24 +62,22 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		if r.URL.Path != "/{id}" {
-			http.Error(w, "url incorrect.", http.StatusBadRequest)
-			return
-		}
+		//how much / in path
 		vars := mux.Vars(r)
 		id, ok := vars["id"]
 		if !ok {
-			http.Error(w, "id is missing in parameters", http.StatusBadRequest)
+			http.Error(w, IdParamIsMissing, http.StatusBadRequest)
 			return
 		}
 		longURL, err := s.storage.Get(id)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		if err == nil {
+			w.Header().Set("Location", longURL)         //TODO: Header Location
+			w.WriteHeader(http.StatusTemporaryRedirect) //TODO: StatusTemporaryRedirect
 			return
 		}
-		w.Header().Set("Location", longURL)
-		w.WriteHeader(http.StatusTemporaryRedirect)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+
 	default:
 		http.Error(w, "Only GET method is supported", http.StatusBadRequest)
 	}
