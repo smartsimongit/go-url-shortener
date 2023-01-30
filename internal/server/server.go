@@ -58,6 +58,10 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
+		if r.URL.Path != "/{id}" {
+			http.Error(w, "url incorrect.", http.StatusBadRequest)
+			return
+		}
 		vars := mux.Vars(r)
 		id, ok := vars["id"]
 		if !ok {
