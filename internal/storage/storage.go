@@ -10,4 +10,5 @@ var (
 type Storage interface {
 	Get(key string) (string, error)
 	Put(key, value string) error
+	GetAll() map[string]string
 }

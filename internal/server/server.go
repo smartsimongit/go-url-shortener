@@ -49,13 +49,13 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 		err = s.storage.Put(genString, url)
 		if err == nil {
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte("http://localhost:8080/" + genString)) //TODO: OK
+			w.Write([]byte("http://localhost:8080/" + genString))
 			return
 		}
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	default:
-		http.Error(w, "Only POST method is supported", http.StatusBadRequest)
+		http.Error(w, "Only POST method for this url", http.StatusBadRequest)
 	}
 }
 
@@ -71,8 +71,8 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		longURL, err := s.storage.Get(id)
 		if err == nil {
-			w.Header().Set("Location", longURL)         //TODO: Header Location
-			w.WriteHeader(http.StatusTemporaryRedirect) //TODO: StatusTemporaryRedirect
+			w.Header().Set("Location", longURL)
+			w.WriteHeader(http.StatusTemporaryRedirect)
 			return
 		}
 		http.Error(w, err.Error(), http.StatusBadRequest)

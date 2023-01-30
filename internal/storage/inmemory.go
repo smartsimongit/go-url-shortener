@@ -13,11 +13,10 @@ func NewInMemory() *InMemory {
 	}
 }
 
-func NewInMemoryWithInnerMap(storeMap map[string]string) *InMemory {
-	storeMap = make(map[string]string)
-	return &InMemory{
-		m: storeMap,
-	}
+func (s *InMemory) GetAll() map[string]string {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	return s.m
 }
 
 func (s *InMemory) Get(key string) (string, error) {
