@@ -27,7 +27,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 
 func TestServer_PostHandlerOk(t *testing.T) {
 
-	sendedUrl := "https://practicum.yandex.ru/"
+	sendedURL := "https://practicum.yandex.ru/"
 	expectedStatus := http.StatusCreated
 	path := "/"
 
@@ -37,7 +37,7 @@ func TestServer_PostHandlerOk(t *testing.T) {
 	r.HandleFunc("/", server.PostHandler)
 	defer ts.Close()
 
-	statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedUrl))))
+	statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedURL))))
 	fmt.Println("body is ", body)
 	assert.Equal(t, expectedStatus, statusCode)
 	assert.NotEmpty(t, body)
