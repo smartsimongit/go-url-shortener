@@ -17,7 +17,6 @@ func IsURLInvalid(s string) bool {
 	return false
 }
 
-// TODO: create from hash longLink
 func GenString() string {
 	symbolsForGen := "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, 5)

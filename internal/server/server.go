@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	IncorrectPostUrl = "Incorrect Post request url"
+	IncorrectPostURL = "Incorrect Post request url"
 	IncorrectLongURL = "You send incorrect LongURL"
-	IdParamIsMissing = "Id is missing in parameters"
+	IDParamIsMissing = "Id is missing in parameters"
 )
 
 type Server struct {
@@ -29,7 +29,7 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		if r.URL.Path != "/" {
-			http.Error(w, IncorrectPostUrl, http.StatusBadRequest)
+			http.Error(w, IncorrectPostURL, http.StatusBadRequest)
 			return
 		}
 		defer r.Body.Close()
@@ -62,11 +62,10 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		//how much / in path
 		vars := mux.Vars(r)
 		id, ok := vars["id"]
 		if !ok {
-			http.Error(w, IdParamIsMissing, http.StatusBadRequest)
+			http.Error(w, IDParamIsMissing, http.StatusBadRequest)
 			return
 		}
 		longURL, err := s.storage.Get(id)

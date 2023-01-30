@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go-url-shortener/internal/storage"
+	"go-url-shortener/internal/util"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +25,26 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	return resp.StatusCode, string(respBody)
 }
 
-func TestServer_PostHandler(t *testing.T) {
+func TestServer_PostHandlerOk(t *testing.T) {
+
+	sendedUrl := "https://practicum.yandex.ru/"
+	expectedStatus := http.StatusCreated
+	path := "/"
+
+	server := New(storage.NewInMemory())
+	r := mux.NewRouter()
+	ts := httptest.NewServer(r)
+	r.HandleFunc("/", server.PostHandler)
+	defer ts.Close()
+
+	statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedUrl))))
+	fmt.Println("body is ", body)
+	assert.Equal(t, expectedStatus, statusCode)
+	assert.NotEmpty(t, body)
+	assert.False(t, util.IsURLInvalid(body))
+
+}
+func TestServer_PostHandlerErrorStatus(t *testing.T) {
 	type want struct {
 		code     int
 		response string
@@ -37,15 +57,7 @@ func TestServer_PostHandler(t *testing.T) {
 		want     want
 	}{
 		{
-			name:     "test #1 Successful. StatusCreated",
-			longLink: "https://practicum.yandex.ru/",
-			target:   "/",
-			want: want{
-				code: http.StatusCreated,
-			},
-		},
-		{
-			name:     "test #2 You send incorrect LongURL",
+			name:     "test #1 You send incorrect LongURL",
 			longLink: "JsdjjsSJdsS",
 			target:   "/",
 			want: want{
@@ -65,6 +77,7 @@ func TestServer_PostHandler(t *testing.T) {
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc("/", server.PostHandler)
+	r.HandleFunc("/{id}", server.GetHandler)
 	defer ts.Close()
 
 	for _, tt := range tests {
@@ -77,7 +90,7 @@ func TestServer_PostHandler(t *testing.T) {
 	}
 }
 
-func TestServer_GetHandler(t *testing.T) {
+func TestServer_GetHandlerErrorStatus(t *testing.T) {
 	type want struct {
 		code int
 	}
@@ -113,8 +126,8 @@ func TestServer_GetHandler(t *testing.T) {
 	server := New(storage.NewInMemory())
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
-	r.HandleFunc("/{id}", server.GetHandler)
 	r.HandleFunc("/", server.PostHandler)
+	r.HandleFunc("/{id}", server.GetHandler)
 	defer ts.Close()
 
 	for _, tt := range tests {
