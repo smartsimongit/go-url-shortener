@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	IncorrectPostURL = errors.New("Incorrect Post request url")
-	IncorrectLongURL = errors.New("You send incorrect LongURL")
-	IDParamIsMissing = errors.New("Id is missing in parameters")
+	ErrIncorrectPostURL = errors.New("incorrect Post request url")
+	ErrIncorrectLongURL = errors.New("you send incorrect LongURL")
+	ErrIDParamIsMissing = errors.New("id is missing in parameters")
 )
 
 type Server struct {
@@ -29,7 +29,7 @@ func New(storage storage.Storage) *Server {
 
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.Error(w, IncorrectPostURL.Error(), http.StatusBadRequest)
+		http.Error(w, ErrIncorrectPostURL.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
@@ -40,7 +40,7 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	url := string(body)
 	if util.IsURLInvalid(url) {
-		http.Error(w, IncorrectLongURL.Error(), http.StatusBadRequest)
+		http.Error(w, ErrIncorrectLongURL.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -53,7 +53,6 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("http://localhost:8080/" + genString))
-	return
 }
 
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +60,7 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
 	if !ok {
-		http.Error(w, IDParamIsMissing.Error(), http.StatusBadRequest)
+		http.Error(w, ErrIDParamIsMissing.Error(), http.StatusBadRequest)
 		return
 	}
 	longURL, err := s.storage.Get(id)
@@ -71,5 +70,4 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Location", longURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
-	return
 }
