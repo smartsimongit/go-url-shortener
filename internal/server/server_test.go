@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +37,6 @@ func TestServer_PostHandlerOk(t *testing.T) {
 	defer ts.Close()
 
 	statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedURL))))
-	fmt.Println("body is ", body)
 	assert.Equal(t, expectedStatus, statusCode)
 	assert.NotEmpty(t, body)
 	assert.False(t, util.IsURLInvalid(body))
@@ -83,7 +81,6 @@ func TestServer_PostHandlerErrorStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			statusCode, body := testRequest(t, ts, "POST", tt.target, bytes.NewBuffer([]byte((tt.longLink))))
-			fmt.Println("body is ", body)
 			assert.Equal(t, tt.want.code, statusCode)
 			assert.NotEmpty(t, body)
 		})
@@ -133,7 +130,6 @@ func TestServer_GetHandlerErrorStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			statusCode, body := testRequest(t, ts, "GET", tt.target, nil)
-			fmt.Println("body is ", body)
 			assert.Equal(t, tt.want.code, statusCode)
 			assert.NotEmpty(t, body)
 		})

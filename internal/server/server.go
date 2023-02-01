@@ -1,17 +1,20 @@
 package server
 
 import (
-	"github.com/gorilla/mux"
-	"go-url-shortener/internal/storage"
-	"go-url-shortener/internal/util"
+	"errors"
 	"io"
 	"net/http"
+
+	"github.com/gorilla/mux"
+
+	"go-url-shortener/internal/storage"
+	"go-url-shortener/internal/util"
 )
 
 var (
-	IncorrectPostURL = "Incorrect Post request url"
-	IncorrectLongURL = "You send incorrect LongURL"
-	IDParamIsMissing = "Id is missing in parameters"
+	IncorrectPostURL = errors.New("Incorrect Post request url")
+	IncorrectLongURL = errors.New("You send incorrect LongURL")
+	IDParamIsMissing = errors.New("Id is missing in parameters")
 )
 
 type Server struct {
@@ -25,59 +28,48 @@ func New(storage storage.Storage) *Server {
 }
 
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
-
-	switch r.Method {
-	case "POST":
-		if r.URL.Path != "/" {
-			http.Error(w, IncorrectPostURL, http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		url := string(body)
-		if util.IsURLInvalid(url) {
-			http.Error(w, IncorrectLongURL, http.StatusBadRequest)
-			return
-		}
-
-		genString := util.GenString()
-
-		err = s.storage.Put(genString, url)
-		if err == nil {
-			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte("http://localhost:8080/" + genString))
-			return
-		}
+	if r.URL.Path != "/" {
+		http.Error(w, IncorrectPostURL.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	default:
-		http.Error(w, "Only POST method for this url", http.StatusBadRequest)
 	}
+	url := string(body)
+	if util.IsURLInvalid(url) {
+		http.Error(w, IncorrectLongURL.Error(), http.StatusBadRequest)
+		return
+	}
+
+	genString := util.GenString()
+
+	err = s.storage.Put(genString, url)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("http://localhost:8080/" + genString))
+	return
 }
 
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		vars := mux.Vars(r)
-		id, ok := vars["id"]
-		if !ok {
-			http.Error(w, IDParamIsMissing, http.StatusBadRequest)
-			return
-		}
-		longURL, err := s.storage.Get(id)
-		if err == nil {
-			w.Header().Set("Location", longURL)
-			w.WriteHeader(http.StatusTemporaryRedirect)
-			return
-		}
+
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, IDParamIsMissing.Error(), http.StatusBadRequest)
+		return
+	}
+	longURL, err := s.storage.Get(id)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-
-	default:
-		http.Error(w, "Only GET method is supported", http.StatusBadRequest)
 	}
+	w.Header().Set("Location", longURL)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+	return
 }
