@@ -13,11 +13,11 @@ import (
 )
 
 var (
-	ErrIncorrectPostURL     = errors.New("incorrect Post request url")
+	ErrIncorrectPostURL     = errors.New("incorrect Post requestJson url")
 	ErrIncorrectLongURL     = errors.New("you send incorrect LongURL")
 	ErrIDParamIsMissing     = errors.New("id is missing in parameters")
-	ErrIncorrectJsonRequest = errors.New("incorrect json request")
-	ErrCreatedResponse      = errors.New("error created response")
+	ErrIncorrectJsonRequest = errors.New("incorrect json requestJson")
+	ErrCreatedResponse      = errors.New("error created responseJson")
 )
 
 type Server struct {
@@ -82,7 +82,7 @@ func (s *Server) PostJsonHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var req request
+	var req requestJson
 	err = json.Unmarshal(body, &req)
 	if err != nil {
 		http.Error(w, ErrIncorrectJsonRequest.Error(), http.StatusBadRequest)
@@ -91,7 +91,7 @@ func (s *Server) PostJsonHandler(w http.ResponseWriter, r *http.Request) {
 	genString := util.GenString()
 	err = s.storage.Put(genString, req.Url)
 
-	resp := response{
+	resp := responseJson{
 		ShortUrl: util.CreateURL(genString),
 	}
 	answer, err := json.Marshal(resp)
@@ -99,14 +99,15 @@ func (s *Server) PostJsonHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, ErrCreatedResponse.Error(), http.StatusBadRequest)
 	}
 	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(answer)
 }
 
-type request struct {
+type requestJson struct {
 	Url string `json:"url"`
 }
 
-type response struct {
+type responseJson struct {
 	ShortUrl string `json:"result"`
 }
 
