@@ -16,6 +16,6 @@ func main() {
 	serv := server.New(store)
 	router.HandleFunc("/{id}", serv.GetHandler)
 	router.HandleFunc("/", serv.PostHandler)
-	router.HandleFunc("/api/shorten", serv.PostJsonHandler)
+	router.HandleFunc("/api/shorten", serv.PostJSONHandler)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

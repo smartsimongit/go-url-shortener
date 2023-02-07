@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	ErrIncorrectPostURL     = errors.New("incorrect Post requestJson url")
+	ErrIncorrectPostURL     = errors.New("incorrect Post requestJSON url")
 	ErrIncorrectLongURL     = errors.New("you send incorrect LongURL")
 	ErrIDParamIsMissing     = errors.New("id is missing in parameters")
-	ErrIncorrectJsonRequest = errors.New("incorrect json requestJson")
+	ErrIncorrectJSONRequest = errors.New("incorrect json requestJSON")
 	ErrCreatedResponse      = errors.New("error created responseJson")
 )
 
@@ -75,24 +75,27 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (s *Server) PostJsonHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var req requestJson
+	var req requestJSON
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		http.Error(w, ErrIncorrectJsonRequest.Error(), http.StatusBadRequest)
+		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 	}
 
 	genString := util.GenString()
-	err = s.storage.Put(genString, req.Url)
-
-	resp := responseJson{
-		ShortUrl: util.CreateURL(genString),
+	err = s.storage.Put(genString, req.URL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	resp := responseJSON{
+		ShortURL: util.CreateURL(genString),
 	}
 	answer, err := json.Marshal(resp)
 	if err != nil {
@@ -103,12 +106,12 @@ func (s *Server) PostJsonHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(answer)
 }
 
-type requestJson struct {
-	Url string `json:"url"`
+type requestJSON struct {
+	URL string `json:"url"`
 }
 
-type responseJson struct {
-	ShortUrl string `json:"result"`
+type responseJSON struct {
+	ShortURL string `json:"result"`
 }
 
 //Задание для трека «Сервис сокращения URL»
