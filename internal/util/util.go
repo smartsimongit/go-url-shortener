@@ -24,5 +24,8 @@ func GenString() string {
 		b[i] = symbolsForGen[rand.Intn(len(symbolsForGen))]
 	}
 	return string(b)
+}
 
+func CreateURL(s string) string {
+	return "http://localhost:8080/" + s
 }
