@@ -101,8 +101,9 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, ErrCreatedResponse.Error(), http.StatusBadRequest)
 	}
-	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
 	w.Write(answer)
 }
 
