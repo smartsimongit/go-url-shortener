@@ -114,8 +114,3 @@ type requestJSON struct {
 type responseJSON struct {
 	ShortURL string `json:"result"`
 }
-
-//Задание для трека «Сервис сокращения URL»
-//Добавьте в сервер новый эндпоинт POST /api/shorten, принимающий в теле запроса JSON-объект {"url":"<some_url>"} и возвращающий в ответ объект {"result":"<shorten_url>"}.
-//Не забудьте добавить тесты на новый эндпоинт, как и на предыдущие.
-//Помните про HTTP content negotiation, проставляйте правильные значения в заголовок Content-Type.

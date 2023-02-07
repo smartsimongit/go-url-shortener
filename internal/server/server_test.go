@@ -135,3 +135,9 @@ func TestServer_GetHandlerErrorStatus(t *testing.T) {
 		})
 	}
 }
+
+//TODO: PostJSONHandler tests
+// body is empty
+// body is not json
+// resp header is Content-Type: application/json
+// resp body is json
