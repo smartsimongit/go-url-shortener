@@ -29,7 +29,7 @@ func GenString() string {
 }
 
 func CreateURL(s string) string {
-	return getBaseUrl() + s
+	return getBaseURL() + s
 }
 
 func GetServerAddress() string {
@@ -41,11 +41,11 @@ func GetServerAddress() string {
 	return addr
 
 }
-func getBaseUrl() string {
-	baseUrl := os.Getenv(baseUrl)
-	fmt.Println("baseUrl is " + baseUrl)
-	if baseUrl == "" {
+func getBaseURL() string {
+	s := os.Getenv(baseURL)
+	fmt.Println("baseUrl is " + s)
+	if s == "" {
 		return "http://localhost:8080/"
 	}
-	return baseUrl
+	return s
 }
