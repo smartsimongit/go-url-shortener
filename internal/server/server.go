@@ -86,6 +86,7 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &req)
 	if err != nil {
 		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
+		return
 	}
 
 	genString := util.GenString()
@@ -100,6 +101,7 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 	answer, err := json.Marshal(resp)
 	if err != nil {
 		http.Error(w, ErrCreatedResponse.Error(), http.StatusBadRequest)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

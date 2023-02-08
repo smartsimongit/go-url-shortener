@@ -18,4 +18,8 @@ func main() {
 	router.HandleFunc("/", serv.PostHandler)
 	router.HandleFunc("/api/shorten", serv.PostJSONHandler)
 	log.Fatal(http.ListenAndServe(":8080", router))
+
+	//TODO: Добавьте возможность конфигурировать сервис с помощью переменных окружения:
+	//адрес запуска HTTP-сервера с помощью переменной SERVER_ADDRESS.
+	//базовый адрес результирующего сокращённого URL с помощью переменной BASE_URL.
 }
