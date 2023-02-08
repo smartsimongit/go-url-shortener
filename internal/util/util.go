@@ -1,8 +1,10 @@
 package util
 
 import (
+	"fmt"
 	"math/rand"
 	"net/url"
+	"os"
 )
 
 func IsURLInvalid(s string) bool {
@@ -27,5 +29,23 @@ func GenString() string {
 }
 
 func CreateURL(s string) string {
-	return "http://localhost:8080/" + s
+	return getBaseUrl() + s
+}
+
+func GetServerAddress() string {
+	addr := os.Getenv(serverAddress)
+	fmt.Println("addr is " + addr)
+	if addr == "" {
+		return ":8080"
+	}
+	return ":" + addr
+
+}
+func getBaseUrl() string {
+	baseUrl := os.Getenv(baseUrl)
+	fmt.Println("baseUrl is " + baseUrl)
+	if baseUrl == "" {
+		return "http://localhost:8080/"
+	}
+	return baseUrl
 }

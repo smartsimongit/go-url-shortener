@@ -34,7 +34,7 @@ func testGetResponse(t *testing.T, ts *httptest.Server, method, path string, bod
 	return resp
 }
 
-func TestServer_PostHandlerOk(t *testing.T) {
+func TestHandlers_PostHandlerOk(t *testing.T) {
 
 	sendedURL := "https://practicum.yandex.ru/"
 	expectedStatus := http.StatusCreated
@@ -52,7 +52,7 @@ func TestServer_PostHandlerOk(t *testing.T) {
 	assert.False(t, util.IsURLInvalid(body))
 
 }
-func TestServer_PostHandlerErrorStatus(t *testing.T) {
+func TestHandlers_PostHandlerErrorStatus(t *testing.T) {
 	type want struct {
 		code     int
 		response string
@@ -97,7 +97,7 @@ func TestServer_PostHandlerErrorStatus(t *testing.T) {
 	}
 }
 
-func TestServer_GetHandlerErrorStatus(t *testing.T) {
+func TestHandlers_GetHandlerErrorStatus(t *testing.T) {
 	type want struct {
 		code int
 	}
@@ -146,7 +146,7 @@ func TestServer_GetHandlerErrorStatus(t *testing.T) {
 	}
 }
 
-func TestServer_PostJSONHandlerErrorStatus(t *testing.T) {
+func TestHandlers_PostJSONHandlerErrorStatus(t *testing.T) {
 	type want struct {
 		code     int
 		response string
@@ -183,7 +183,7 @@ func TestServer_PostJSONHandlerErrorStatus(t *testing.T) {
 	}
 }
 
-func TestServer_PostJSONHandlerOKStatus(t *testing.T) {
+func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 	type want struct {
 		code        int
 		response    string
@@ -220,7 +220,7 @@ func TestServer_PostJSONHandlerOKStatus(t *testing.T) {
 			contentType := resp.Header.Get("Content-Type")
 			fmt.Println(string(respBody))
 			assert.NotEmpty(t, respBody)
-			assert.True(t, IsJSON(string(respBody)))
+			assert.True(t, isJSON(string(respBody)))
 			assert.Equal(t, tt.want.code, resp.StatusCode)
 			assert.Equal(t, tt.want.contentType, contentType)
 		})
@@ -228,7 +228,7 @@ func TestServer_PostJSONHandlerOKStatus(t *testing.T) {
 
 }
 
-func IsJSON(str string) bool {
+func isJSON(str string) bool {
 	var js json.RawMessage
 	return json.Unmarshal([]byte(str), &js) == nil
 }

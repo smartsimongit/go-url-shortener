@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
+	"go-url-shortener/internal/util"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/mux"
 
 	"go-url-shortener/internal/server"
 	"go-url-shortener/internal/storage"
@@ -17,7 +17,7 @@ func main() {
 	router.HandleFunc("/{id}", serv.GetHandler)
 	router.HandleFunc("/", serv.PostHandler)
 	router.HandleFunc("/api/shorten", serv.PostJSONHandler)
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(util.GetServerAddress(), router))
 
 	//TODO: Добавьте возможность конфигурировать сервис с помощью переменных окружения:
 	//адрес запуска HTTP-сервера с помощью переменной SERVER_ADDRESS.
