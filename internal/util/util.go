@@ -36,9 +36,9 @@ func GetServerAddress() string {
 	addr := os.Getenv(serverAddress)
 	fmt.Println("addr is " + addr)
 	if addr == "" {
-		return ":8080"
+		return "http://localhost:8080"
 	}
-	return ":" + addr
+	return addr
 
 }
 func getBaseUrl() string {
