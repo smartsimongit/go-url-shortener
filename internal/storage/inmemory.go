@@ -1,16 +1,33 @@
 package storage
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
+
+var useFileSaving = false
 
 type InMemory struct {
 	lock sync.Mutex
 	m    map[string]string
 }
 
+// NewInMemory TODO:Устарело. Удалить
 func NewInMemory() *InMemory {
 	return &InMemory{
 		m: make(map[string]string),
 	}
+}
+
+func NewInMemoryWithFile(fileName string) *InMemory {
+	if fileName == "" {
+		fmt.Println("Use storage without file saving")
+		return NewInMemory()
+	}
+	fmt.Println("Use storage with file saving")
+	//TODO:Восстановить из файла. Обработать что файла нет, что он пустой, что он правильно заполнен
+	useFileSaving = true
+	return NewInMemory()
 }
 
 func (s *InMemory) GetAll() map[string]string {
@@ -30,6 +47,7 @@ func (s *InMemory) Get(key string) (string, error) {
 }
 
 func (s *InMemory) Put(key string, value string) error {
+	//TODO: сохранить структуру из памяти в файл, перезаписав содержимое
 	s.lock.Lock()
 	defer s.lock.Unlock()
 

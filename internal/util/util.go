@@ -49,3 +49,9 @@ func getBaseURL() string {
 	}
 	return s
 }
+
+func GetStorageFileName() string {
+	s := os.Getenv(fileStorageUrl)
+	fmt.Println("storage filename is ", s)
+	return s
+}
