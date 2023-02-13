@@ -27,7 +27,7 @@ func ConfigApp() {
 
 	appConfig.baseURLValue = os.Getenv(baseURL)
 	if appConfig.baseURLValue == "" {
-		flag.StringVar(&appConfig.baseURLValue, "b", "http://localhost:8080", "the base address of the resulting shortened URL")
+		flag.StringVar(&appConfig.baseURLValue, "b", "http://127.0.0.1:8080", "the base address of the resulting shortened URL")
 	}
 
 	appConfig.fileStorageURLValue = os.Getenv(fileStorageURL)
