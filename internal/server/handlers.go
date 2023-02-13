@@ -12,7 +12,7 @@ import (
 
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.Error(w, ErrIncorrectPostURL.Error(), http.StatusBadRequest)
+		http.Error(w, util.ErrIncorrectPostURL.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
@@ -23,7 +23,7 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	url := string(body)
 	if util.IsURLInvalid(url) {
-		http.Error(w, ErrIncorrectLongURL.Error(), http.StatusBadRequest)
+		http.Error(w, util.ErrIncorrectLongURL.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -42,7 +42,7 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
 	if !ok {
-		http.Error(w, ErrIDParamIsMissing.Error(), http.StatusBadRequest)
+		http.Error(w, util.ErrIDParamIsMissing.Error(), http.StatusBadRequest)
 		return
 	}
 	longURL, err := s.storage.Get(id)
@@ -64,7 +64,7 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 	var req requestJSON
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
+		http.Error(w, util.ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	answer, err := json.Marshal(resp)
 	if err != nil {
-		http.Error(w, ErrCreatedResponse.Error(), http.StatusBadRequest)
+		http.Error(w, util.ErrCreatedResponse.Error(), http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -95,3 +95,5 @@ type requestJSON struct {
 type responseJSON struct {
 	ShortURL string `json:"result"`
 }
+
+//TODO:Вынести хэндлеры (домены?)
