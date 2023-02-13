@@ -3,7 +3,6 @@ package util
 import (
 	"math/rand"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 )
@@ -36,22 +35,12 @@ func CreateURL(s string) string {
 }
 
 func GetServerAddress() string {
-	addr := os.Getenv(serverAddress)
-	if addr == "" {
-		return ":8080"
-	}
-	return addr
-
+	return appConfig.serverAddressValue
 }
 func getBaseURL() string {
-	s := os.Getenv(baseURL)
-	if s == "" {
-		return "http://localhost:8080"
-	}
-	return s
+	return appConfig.baseURLValue
 }
 
 func GetStorageFileName() string {
-	s := os.Getenv(fileStorageURL)
-	return s
+	return appConfig.fileStorageURLValue
 }
