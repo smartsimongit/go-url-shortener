@@ -2,10 +2,12 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"go-url-shortener/internal/util"
 	"io"
 	"net/http"
+
+	"github.com/gorilla/mux"
+
+	"go-url-shortener/internal/util"
 )
 
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {

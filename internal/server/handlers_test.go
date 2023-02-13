@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go-url-shortener/internal/storage"
-	"go-url-shortener/internal/util"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"go-url-shortener/internal/storage"
+	"go-url-shortener/internal/util"
 )
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (int, string) {
