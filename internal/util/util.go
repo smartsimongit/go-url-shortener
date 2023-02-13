@@ -52,6 +52,6 @@ func getBaseURL() string {
 }
 
 func GetStorageFileName() string {
-	s := os.Getenv(fileStorageUrl)
+	s := os.Getenv(fileStorageURL)
 	return s
 }
