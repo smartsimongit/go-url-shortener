@@ -32,7 +32,7 @@ func ConfigApp() {
 
 	appConfig.fileStorageURLValue = os.Getenv(fileStorageURL)
 	if appConfig.fileStorageURLValue == "" {
-		flag.StringVar(&appConfig.fileStorageURLValue, "f", "", "path to file with shorted URLs")
+		flag.StringVar(&appConfig.fileStorageURLValue, "f", "storage.txt", "path to file with shorted URLs")
 	}
 
 }
