@@ -19,5 +19,5 @@ func main() {
 	router.HandleFunc("/{id}", serv.GetHandler)
 	router.HandleFunc("/", serv.PostHandler)
 	router.HandleFunc("/api/shorten", serv.PostJSONHandler)
-	log.Fatal(http.ListenAndServe(util.GetServerAddress(), router))
+	log.Fatal(http.ListenAndServe(util.GetServerAddress(), server.Middleware(router)))
 }
