@@ -28,35 +28,44 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	return resp.StatusCode, string(respBody)
 }
 
-func testPOSTResponse(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) *http.Response {
-	req, err := http.NewRequest(method, ts.URL+path, body)
+func testPOSTResponse(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Response {
+	req, err := http.NewRequest("POST", ts.URL+path, body)
 	require.NoError(t, err)
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	return resp
 }
 
-func TestHandlers_PostHandlerOk(t *testing.T) {
-	util.ConfigApp()
+func testPOSTResponseWithEncodingGzip(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Response {
+	req, err := http.NewRequest("POST", ts.URL+path, body)
+	req.Header.Set("Accept-Encoding", "gzip")
+	//req.Header.Set("Content-Encoding", "gzip")
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	return resp
+}
 
+func TestHandlers_PostHandlerStatusCreated(t *testing.T) {
+	util.ConfigApp()
+	name := "test #1 Test PostHandler Status Created"
 	sendedURL := "https://practicum.yandex.ru/"
 	expectedStatus := http.StatusCreated
 	path := "/"
-
 	server := New(storage.NewInMemory())
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc("/", server.PostHandler)
 	defer ts.Close()
-
-	statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedURL))))
-	assert.Equal(t, expectedStatus, statusCode)
-	assert.NotEmpty(t, body)
-	fmt.Println("body is ", body)
-	assert.False(t, util.IsURLInvalid(body))
+	t.Run(name, func(t *testing.T) {
+		statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedURL))))
+		assert.Equal(t, expectedStatus, statusCode)
+		assert.NotEmpty(t, body)
+		assert.False(t, util.IsURLInvalid(body))
+	})
 
 }
-func TestHandlers_PostHandlerErrorStatus(t *testing.T) {
+func TestHandlers_PostHandlerErrorStatuses(t *testing.T) {
 	type want struct {
 		code     int
 		response string
@@ -69,7 +78,7 @@ func TestHandlers_PostHandlerErrorStatus(t *testing.T) {
 		want     want
 	}{
 		{
-			name:     "test #1 You send incorrect LongURL",
+			name:     "test #2 Test PostHandler StatusBadRequest when send incorrect LongURL",
 			longLink: "JsdjjsSJdsS",
 			target:   "/",
 			want: want{
@@ -77,7 +86,7 @@ func TestHandlers_PostHandlerErrorStatus(t *testing.T) {
 			},
 		},
 		{
-			name:     "test #3 page not found",
+			name:     "test #3 Test PostHandler StatusNotFound",
 			longLink: "http://mail.yandex.ru",
 			target:   "/target/",
 			want: want{
@@ -208,7 +217,6 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 		},
 	}
 	path := "/api/shorten"
-	method := "POST"
 
 	server := New(storage.NewInMemory())
 	r := mux.NewRouter()
@@ -217,7 +225,7 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 	defer ts.Close()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp := testPOSTResponse(t, ts, method, path, bytes.NewBuffer([]byte((tt.bodyReq))))
+			resp := testPOSTResponse(t, ts, path, bytes.NewBuffer([]byte((tt.bodyReq))))
 			respBody, err := io.ReadAll(resp.Body)
 			assert.Nil(t, err)
 			defer resp.Body.Close()
@@ -235,7 +243,3 @@ func isJSON(str string) bool {
 	var js json.RawMessage
 	return json.Unmarshal([]byte(str), &js) == nil
 }
-
-//TODO:ТЕСТЫ проверяющие прочтение gzip body
-//TODO:ТЕСТЫ проверяющие отправку gzip body
-//TODO:ТЕСТЫ причесать описание тестов
