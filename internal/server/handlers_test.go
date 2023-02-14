@@ -235,3 +235,7 @@ func isJSON(str string) bool {
 	var js json.RawMessage
 	return json.Unmarshal([]byte(str), &js) == nil
 }
+
+//TODO:ТЕСТЫ проверяющие прочтение gzip body
+//TODO:ТЕСТЫ проверяющие отправку gzip body
+//TODO:ТЕСТЫ причесать описание тестов
