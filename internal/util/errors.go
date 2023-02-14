@@ -8,4 +8,5 @@ var (
 	ErrIDParamIsMissing     = errors.New("id is missing in parameters")
 	ErrIncorrectJSONRequest = errors.New("incorrect json requestJSON")
 	ErrCreatedResponse      = errors.New("error created responseJson")
+	ErrReadBodyRequest      = errors.New("error read body request")
 )

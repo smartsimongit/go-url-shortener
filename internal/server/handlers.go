@@ -1,6 +1,7 @@
 package server
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -15,13 +16,12 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, util.ErrIncorrectPostURL.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
+	encodeRequest, err := encodeBody(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, util.ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
 	}
-	url := string(body)
+	url := string(encodeRequest)
 	if util.IsURLInvalid(url) {
 		http.Error(w, util.ErrIncorrectLongURL.Error(), http.StatusBadRequest)
 		return
@@ -54,15 +54,34 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
+func encodeBody(r *http.Request) ([]byte, error) {
+	var reader io.Reader
+	if r.Header.Get(`Content-Encoding`) == `gzip` {
+		gz, err := gzip.NewReader(r.Body)
+		if err != nil {
+			return nil, err
+		}
+		reader = gz
+		defer gz.Close()
+	} else {
+		reader = r.Body
+	}
+	req, err := io.ReadAll(reader)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		return nil, err
+	}
+	return req, nil
+}
+
+func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
+
+	encodeRequest, err := encodeBody(r)
+	if err != nil {
+		http.Error(w, util.ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
 	}
 	var req requestJSON
-	err = json.Unmarshal(body, &req)
+	err = json.Unmarshal(encodeRequest, &req)
 	if err != nil {
 		http.Error(w, util.ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
@@ -97,3 +116,7 @@ type responseJSON struct {
 }
 
 //TODO:Вынести хэндлеры (домены?)
+//TODO: Добавьте поддержку gzip
+//TODO: принимать запросы в сжатом формате (HTTP-заголовок Content-Encoding);
+//TODO: отдавать сжатый ответ клиенту, который поддерживает обработку сжатых ответов (HTTP-заголовок Accept-Encoding).
+//TODO: Вспомните middleware из урока про HTTP-сервер, это может вам помочь.

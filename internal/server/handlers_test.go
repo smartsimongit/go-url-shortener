@@ -28,7 +28,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	return resp.StatusCode, string(respBody)
 }
 
-func testGetResponse(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) *http.Response {
+func testPOSTResponse(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) *http.Response {
 	req, err := http.NewRequest(method, ts.URL+path, body)
 	require.NoError(t, err)
 	resp, err := http.DefaultClient.Do(req)
@@ -217,7 +217,7 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 	defer ts.Close()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp := testGetResponse(t, ts, method, path, bytes.NewBuffer([]byte((tt.bodyReq))))
+			resp := testPOSTResponse(t, ts, method, path, bytes.NewBuffer([]byte((tt.bodyReq))))
 			respBody, err := io.ReadAll(resp.Body)
 			assert.Nil(t, err)
 			defer resp.Body.Close()
@@ -231,7 +231,6 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 	}
 
 }
-
 func isJSON(str string) bool {
 	var js json.RawMessage
 	return json.Unmarshal([]byte(str), &js) == nil
