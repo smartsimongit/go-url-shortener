@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -16,6 +17,12 @@ import (
 	"go-url-shortener/internal/storage"
 	"go-url-shortener/internal/util"
 )
+
+func TestMain(m *testing.M) {
+	util.ConfigApp()
+	code := m.Run()
+	os.Exit(code)
+}
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (int, string) {
 	req, err := http.NewRequest(method, ts.URL+path, body)
@@ -36,33 +43,27 @@ func testPOSTResponse(t *testing.T, ts *httptest.Server, path string, body io.Re
 	return resp
 }
 
-func testPOSTResponseWithEncodingGzip(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Response {
-	req, err := http.NewRequest("POST", ts.URL+path, body)
-	req.Header.Set("Accept-Encoding", "gzip")
-	//req.Header.Set("Content-Encoding", "gzip")
-	require.NoError(t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	return resp
-}
-
 func TestHandlers_PostHandlerStatusCreated(t *testing.T) {
-	util.ConfigApp()
+
+	storage.NewInMemoryWithFile(util.GetStorageFileName())
 	name := "test #1 Test PostHandler Status Created"
 	sendedURL := "https://practicum.yandex.ru/"
 	expectedStatus := http.StatusCreated
 	path := "/"
-	server := New(storage.NewInMemory())
+
+	server := New(storage.NewInMemoryWithFile(util.GetStorageFileName()))
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc("/", server.PostHandler)
 	defer ts.Close()
+
 	t.Run(name, func(t *testing.T) {
 		statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedURL))))
 		assert.Equal(t, expectedStatus, statusCode)
 		assert.NotEmpty(t, body)
 		assert.False(t, util.IsURLInvalid(body))
 	})
+	os.Remove(util.GetStorageFileName())
 
 }
 func TestHandlers_PostHandlerErrorStatuses(t *testing.T) {
@@ -121,21 +122,21 @@ func TestHandlers_GetHandlerErrorStatus(t *testing.T) {
 		want   want
 	}{
 		{
-			name:   "test #1  not found code is storage",
+			name:   "test #4 Test GetHandler request not exist id.",
 			target: "/sd3rt",
 			want: want{
 				code: http.StatusBadRequest,
 			},
 		},
 		{
-			name:   "test #2 page not found",
+			name:   "test #5 Test GetHandler StatusNotFound",
 			target: "/dsgdsfsd/",
 			want: want{
 				code: http.StatusNotFound,
 			},
 		},
 		{
-			name:   "test #3 Only POST method for this url",
+			name:   "test #6 Test GetHandler request without id",
 			target: "/",
 			want: want{
 				code: http.StatusBadRequest,
@@ -170,7 +171,7 @@ func TestHandlers_PostJSONHandlerErrorStatus(t *testing.T) {
 		want want
 	}{
 		{
-			name: "test #1 incorrect json request",
+			name: "test #6 Test PostJSONHandler incorrect json request",
 			body: "",
 			want: want{
 				code: http.StatusBadRequest,
@@ -203,29 +204,29 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 		contentType string
 	}
 	tests := []struct {
+		path    string
 		name    string
 		bodyReq string
 		want    want
 	}{
 		{
-			name:    "test #1 ok response",
+			name:    "test #6 Test PostJSONHandler StatusCreated response",
 			bodyReq: "{\"url\":\"https://practicum.yandex.ru/\"}",
+			path:    "/api/shorten",
 			want: want{
 				code:        http.StatusCreated,
 				contentType: "application/json",
 			},
 		},
 	}
-	path := "/api/shorten"
-
-	server := New(storage.NewInMemory())
+	server := New(storage.NewInMemoryWithFile(util.GetStorageFileName()))
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
-	r.HandleFunc(path, server.PostJSONHandler)
 	defer ts.Close()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp := testPOSTResponse(t, ts, path, bytes.NewBuffer([]byte((tt.bodyReq))))
+			r.HandleFunc(tt.path, server.PostJSONHandler)
+			resp := testPOSTResponse(t, ts, tt.path, bytes.NewBuffer([]byte((tt.bodyReq))))
 			respBody, err := io.ReadAll(resp.Body)
 			assert.Nil(t, err)
 			defer resp.Body.Close()
@@ -237,8 +238,9 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 			assert.Equal(t, tt.want.contentType, contentType)
 		})
 	}
-
+	os.Remove(util.GetStorageFileName())
 }
+
 func isJSON(str string) bool {
 	var js json.RawMessage
 	return json.Unmarshal([]byte(str), &js) == nil
