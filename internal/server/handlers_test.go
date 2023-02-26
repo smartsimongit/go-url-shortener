@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go-url-shortener/internal/services"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -14,8 +16,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go-url-shortener/internal/storage"
-	"go-url-shortener/internal/util"
 )
+
+func TestMain(m *testing.M) {
+	services.ConfigApp()
+	code := m.Run()
+	os.Exit(code)
+}
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (int, string) {
 	req, err := http.NewRequest(method, ts.URL+path, body)
@@ -28,35 +35,36 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	return resp.StatusCode, string(respBody)
 }
 
-func testGetResponse(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) *http.Response {
-	req, err := http.NewRequest(method, ts.URL+path, body)
+func testPOSTResponse(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Response {
+	req, err := http.NewRequest("POST", ts.URL+path, body)
 	require.NoError(t, err)
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	return resp
 }
 
-func TestHandlers_PostHandlerOk(t *testing.T) {
-	util.ConfigApp()
+func TestHandlers_PostHandlerStatusCreated(t *testing.T) {
 
+	storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue)
+	name := "test #1 Test PostHandler Status Created"
 	sendedURL := "https://practicum.yandex.ru/"
 	expectedStatus := http.StatusCreated
 	path := "/"
 
-	server := New(storage.NewInMemory())
+	server := New(storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc("/", server.PostHandler)
 	defer ts.Close()
 
-	statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedURL))))
-	assert.Equal(t, expectedStatus, statusCode)
-	assert.NotEmpty(t, body)
-	fmt.Println("body is ", body)
-	assert.False(t, util.IsURLInvalid(body))
-
+	t.Run(name, func(t *testing.T) {
+		statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedURL))))
+		assert.Equal(t, expectedStatus, statusCode)
+		assert.False(t, isURLInvalid(body))
+	})
+	os.Remove(services.AppConfig.FileStorageURLValue)
 }
-func TestHandlers_PostHandlerErrorStatus(t *testing.T) {
+func TestHandlers_PostHandlerErrorStatuses(t *testing.T) {
 	type want struct {
 		code     int
 		response string
@@ -69,7 +77,7 @@ func TestHandlers_PostHandlerErrorStatus(t *testing.T) {
 		want     want
 	}{
 		{
-			name:     "test #1 You send incorrect LongURL",
+			name:     "test #2 Test PostHandler StatusBadRequest when send incorrect LongURL",
 			longLink: "JsdjjsSJdsS",
 			target:   "/",
 			want: want{
@@ -77,7 +85,7 @@ func TestHandlers_PostHandlerErrorStatus(t *testing.T) {
 			},
 		},
 		{
-			name:     "test #3 page not found",
+			name:     "test #3 Test PostHandler StatusNotFound",
 			longLink: "http://mail.yandex.ru",
 			target:   "/target/",
 			want: want{
@@ -112,21 +120,21 @@ func TestHandlers_GetHandlerErrorStatus(t *testing.T) {
 		want   want
 	}{
 		{
-			name:   "test #1  not found code is storage",
+			name:   "test #4 Test GetHandler request not exist id.",
 			target: "/sd3rt",
 			want: want{
 				code: http.StatusBadRequest,
 			},
 		},
 		{
-			name:   "test #2 page not found",
+			name:   "test #5 Test GetHandler StatusNotFound",
 			target: "/dsgdsfsd/",
 			want: want{
 				code: http.StatusNotFound,
 			},
 		},
 		{
-			name:   "test #3 Only POST method for this url",
+			name:   "test #6 Test GetHandler request without id",
 			target: "/",
 			want: want{
 				code: http.StatusBadRequest,
@@ -161,7 +169,7 @@ func TestHandlers_PostJSONHandlerErrorStatus(t *testing.T) {
 		want want
 	}{
 		{
-			name: "test #1 incorrect json request",
+			name: "test #6 Test PostJSONHandler incorrect json request",
 			body: "",
 			want: want{
 				code: http.StatusBadRequest,
@@ -194,30 +202,29 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 		contentType string
 	}
 	tests := []struct {
+		path    string
 		name    string
 		bodyReq string
 		want    want
 	}{
 		{
-			name:    "test #1 ok response",
+			name:    "test #6 Test PostJSONHandler StatusCreated response",
 			bodyReq: "{\"url\":\"https://practicum.yandex.ru/\"}",
+			path:    "/api/shorten",
 			want: want{
 				code:        http.StatusCreated,
 				contentType: "application/json",
 			},
 		},
 	}
-	path := "/api/shorten"
-	method := "POST"
-
-	server := New(storage.NewInMemory())
+	server := New(storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
-	r.HandleFunc(path, server.PostJSONHandler)
 	defer ts.Close()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp := testGetResponse(t, ts, method, path, bytes.NewBuffer([]byte((tt.bodyReq))))
+			r.HandleFunc(tt.path, server.PostJSONHandler)
+			resp := testPOSTResponse(t, ts, tt.path, bytes.NewBuffer([]byte((tt.bodyReq))))
 			respBody, err := io.ReadAll(resp.Body)
 			assert.Nil(t, err)
 			defer resp.Body.Close()
@@ -229,7 +236,7 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 			assert.Equal(t, tt.want.contentType, contentType)
 		})
 	}
-
+	os.Remove(services.AppConfig.FileStorageURLValue)
 }
 
 func isJSON(str string) bool {
