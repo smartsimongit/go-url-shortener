@@ -43,7 +43,7 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(createURL(genString)))
 }
 
-// TODO: Написать тест, проверить статус и хэдер
+// TODO: Написать тест, проверить статус и хэдерц
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
