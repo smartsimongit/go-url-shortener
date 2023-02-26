@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go-url-shortener/internal/services"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,11 +16,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go-url-shortener/internal/storage"
-	"go-url-shortener/internal/util"
 )
 
 func TestMain(m *testing.M) {
-	util.ConfigApp()
+	services.ConfigApp()
 	code := m.Run()
 	os.Exit(code)
 }
@@ -45,13 +45,13 @@ func testPOSTResponse(t *testing.T, ts *httptest.Server, path string, body io.Re
 
 func TestHandlers_PostHandlerStatusCreated(t *testing.T) {
 
-	storage.NewInMemoryWithFile(util.GetStorageFileName())
+	storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue)
 	name := "test #1 Test PostHandler Status Created"
 	sendedURL := "https://practicum.yandex.ru/"
 	expectedStatus := http.StatusCreated
 	path := "/"
 
-	server := New(storage.NewInMemoryWithFile(util.GetStorageFileName()))
+	server := New(storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc("/", server.PostHandler)
@@ -60,11 +60,9 @@ func TestHandlers_PostHandlerStatusCreated(t *testing.T) {
 	t.Run(name, func(t *testing.T) {
 		statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedURL))))
 		assert.Equal(t, expectedStatus, statusCode)
-		assert.NotEmpty(t, body)
-		assert.False(t, util.IsURLInvalid(body))
+		assert.False(t, isURLInvalid(body))
 	})
-	os.Remove(util.GetStorageFileName())
-
+	os.Remove(services.AppConfig.FileStorageURLValue)
 }
 func TestHandlers_PostHandlerErrorStatuses(t *testing.T) {
 	type want struct {
@@ -219,7 +217,7 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 			},
 		},
 	}
-	server := New(storage.NewInMemoryWithFile(util.GetStorageFileName()))
+	server := New(storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -238,7 +236,7 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 			assert.Equal(t, tt.want.contentType, contentType)
 		})
 	}
-	os.Remove(util.GetStorageFileName())
+	os.Remove(services.AppConfig.FileStorageURLValue)
 }
 
 func isJSON(str string) bool {
