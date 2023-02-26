@@ -37,6 +37,7 @@ func testGetResponse(t *testing.T, ts *httptest.Server, method, path string, bod
 }
 
 func TestHandlers_PostHandlerOk(t *testing.T) {
+	util.ConfigApp()
 
 	sendedURL := "https://practicum.yandex.ru/"
 	expectedStatus := http.StatusCreated
@@ -51,6 +52,7 @@ func TestHandlers_PostHandlerOk(t *testing.T) {
 	statusCode, body := testRequest(t, ts, "POST", path, bytes.NewBuffer([]byte((sendedURL))))
 	assert.Equal(t, expectedStatus, statusCode)
 	assert.NotEmpty(t, body)
+	fmt.Println("body is ", body)
 	assert.False(t, util.IsURLInvalid(body))
 
 }
