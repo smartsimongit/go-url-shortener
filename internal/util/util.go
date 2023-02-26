@@ -3,6 +3,9 @@ package util
 import (
 	"math/rand"
 	"net/url"
+	"os"
+	"strings"
+	"time"
 )
 
 func IsURLInvalid(s string) bool {
@@ -18,14 +21,37 @@ func IsURLInvalid(s string) bool {
 }
 
 func GenString() string {
-	symbolsForGen := "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	b := make([]byte, 5)
-	for i := range b {
-		b[i] = symbolsForGen[rand.Intn(len(symbolsForGen))]
+	rand.Seed(time.Now().UnixNano())
+	chars := []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	length := 8
+	var b strings.Builder
+	for i := 0; i < length; i++ {
+		b.WriteRune(chars[rand.Intn(len(chars))])
 	}
-	return string(b)
+	return b.String() //
 }
 
 func CreateURL(s string) string {
-	return "http://localhost:8080/" + s
+	return getBaseURL() + "/" + s
+}
+
+func GetServerAddress() string {
+	addr := os.Getenv(serverAddress)
+	if addr == "" {
+		return ":8080"
+	}
+	return addr
+
+}
+func getBaseURL() string {
+	s := os.Getenv(baseURL)
+	if s == "" {
+		return "http://localhost:8080"
+	}
+	return s
+}
+
+func GetStorageFileName() string {
+	s := os.Getenv(fileStorageURL)
+	return s
 }
