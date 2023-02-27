@@ -39,7 +39,6 @@ func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("answer is ", string(answer))
 	w.Write(answer)
-	return
 }
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 
