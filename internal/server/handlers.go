@@ -21,7 +21,7 @@ import (
 
 func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := getUser(r)
-	if err != nil || user != "" {
+	if err != nil || user == "" {
 		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
 	}

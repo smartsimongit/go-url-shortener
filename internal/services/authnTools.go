@@ -36,9 +36,6 @@ func VerifyToken(token string) bool {
 	}
 	name := tokenBytes[:8]
 	sign := tokenBytes[8:]
-	fmt.Println("name:", name)                                                    //TODO: убрать
-	fmt.Println("pass:", sign)                                                    //TODO: убрать
-	fmt.Println("Подпись подлинная - ", hmac.Equal(SignName(string(name)), sign)) //TODO: убрать
 	return hmac.Equal(SignName(string(name)), sign)
 }
 

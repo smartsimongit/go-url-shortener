@@ -15,7 +15,7 @@ func (s *Server) AddRoutes(router *mux.Router) {
 	router.HandleFunc("/{id}", s.GetHandler)
 	router.HandleFunc("/", s.PostHandler)
 	router.HandleFunc("/api/shorten", s.PostJSONHandler)
-	router.HandleFunc("/api/user/urls", s.GetUserURLsHandler) //TODO:
+	router.HandleFunc("/api/user/urls", s.GetUserURLsHandler)
 }
 
 func New(ctx context.Context, storage storage.Storage) *Server {
