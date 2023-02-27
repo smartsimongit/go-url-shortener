@@ -1,14 +1,13 @@
 package server
 
 import (
-	"encoding/hex"
-	"errors"
-	"fmt"
-	"go-url-shortener/internal/services"
-	"go-url-shortener/internal/storage"
+	"github.com/gorilla/mux"
 
 	"compress/gzip"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -16,7 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"go-url-shortener/internal/services"
+	"go-url-shortener/internal/storage"
 )
 
 func (s *Server) GetUserURLsHandler(writer http.ResponseWriter, request *http.Request) {
@@ -45,10 +45,10 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	genString := genString()
-	rec := storage.URLRecord{Id: genString,
+	rec := storage.URLRecord{ID: genString,
 		ShortURL:    createURL(genString),
 		OriginalURL: incomingURL,
-		User:        storage.User{Id: user}}
+		User:        storage.User{ID: user}}
 	err = s.storage.Put(genString, rec)
 
 	if err != nil {
@@ -65,15 +65,10 @@ func getUser(r *http.Request) (string, error) {
 		return "", err
 	}
 	user := services.GetUserFromToken(token)
-	fmt.Println("PostHandler user ", user) //TODO: убрать
 	return user, nil
 }
 
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
-	token, err := readCookie("token", r)     //TODO: убрать
-	user := services.GetUserFromToken(token) //TODO: убрать
-	fmt.Println("GetHandler user ", user)    //TODO: убрать
-
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
 	if !ok {
@@ -110,10 +105,10 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	genString := genString()
-	rec := storage.URLRecord{Id: genString,
+	rec := storage.URLRecord{ID: genString,
 		ShortURL:    createURL(genString),
 		OriginalURL: req.URL,
-		User:        storage.User{Id: user}}
+		User:        storage.User{ID: user}}
 
 	err = s.storage.Put(genString, rec)
 	if err != nil {

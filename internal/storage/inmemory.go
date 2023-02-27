@@ -13,7 +13,7 @@ type InMemory struct {
 }
 
 type URLRecord struct {
-	Id          string `json:"Id"`
+	ID          string `json:"ID"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 	User        User   `json:"User"`
@@ -24,7 +24,7 @@ type URLRecords struct {
 }
 
 type User struct {
-	Id string `json:"Id"`
+	ID string `json:"ID"`
 }
 
 func NewInMemory() *InMemory {
@@ -87,10 +87,10 @@ func createShortURLsFromMap(m map[string]URLRecord) *URLRecords {
 	shortURLSlice := []URLRecord{}
 	for k, v := range m {
 		shortURL := URLRecord{
-			Id:          k,
+			ID:          k,
 			OriginalURL: v.OriginalURL,
 			ShortURL:    v.ShortURL,
-			User:        User{Id: v.User.Id},
+			User:        User{ID: v.User.ID},
 		}
 		shortURLSlice = append(shortURLSlice, shortURL)
 	}
@@ -102,7 +102,7 @@ func createMapFromShortURLs(shortURLs *URLRecords) map[string]URLRecord {
 	if shortURLs != nil {
 		shortURLsSlice := shortURLs.URLRecords
 		for i := range shortURLsSlice {
-			m[shortURLsSlice[i].Id] = shortURLsSlice[i]
+			m[shortURLsSlice[i].ID] = shortURLsSlice[i]
 		}
 	}
 	return m
