@@ -1,6 +1,9 @@
 package server
 
 import (
+	"encoding/hex"
+	"errors"
+	"fmt"
 	"go-url-shortener/internal/services"
 
 	"compress/gzip"
@@ -102,9 +105,21 @@ type responseJSON struct {
 	ShortURL string `json:"result"`
 }
 
-// TODO: Написать тест
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		token, err := readCookie("Token", r)
+		if err == nil && token != "" && services.VerifyToken(token) {
+
+		} else {
+			userName := genString()
+			encr := services.SignName(userName)
+			cookieString := hex.EncodeToString(append([]byte(userName), encr...))
+			cookie := http.Cookie{Name: "token", Value: cookieString}
+			http.SetCookie(w, &cookie)
+			fmt.Println("encr ", encr)                 //TODO: убрать
+			fmt.Println("cookieString ", cookieString) //TODO: убрать
+		}
 
 		if r.Header.Get(`Content-Encoding`) == `gzip` {
 			gz, err := gzip.NewReader(r.Body)
@@ -168,4 +183,17 @@ func isURLInvalid(s string) bool {
 
 func createURL(s string) string {
 	return services.AppConfig.BaseURLValue + "/" + s
+}
+
+func readCookie(name string, r *http.Request) (value string, err error) {
+	if name == "" {
+		return value, errors.New("you are trying to read empty cookie")
+	}
+	cookie, err := r.Cookie(name)
+	if err != nil {
+		return value, err
+	}
+	str := cookie.Value
+	value, _ = url.QueryUnescape(str)
+	return value, err
 }
