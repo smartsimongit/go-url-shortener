@@ -13,10 +13,10 @@ type InMemory struct {
 }
 
 type URLRecord struct {
-	ID          string `json:"ID"`
+	ID          string `json:"ID,omitempty"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
-	User        User   `json:"User"`
+	User        User   `json:"User,omitempty"`
 }
 
 type URLRecords struct {
@@ -57,6 +57,23 @@ func (s *InMemory) GetAll() map[string]URLRecord {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	return s.m
+}
+
+func (s *InMemory) GetByUser(usr string) ([]URLRecord, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	shortURLSlice := []URLRecord{}
+	for _, v := range s.m {
+		//TODO:CHECK_USER
+		if usr == v.User.ID {
+			shortURL := URLRecord{
+				OriginalURL: v.OriginalURL,
+				ShortURL:    v.ShortURL,
+			}
+			shortURLSlice = append(shortURLSlice, shortURL)
+		}
+	}
+	return shortURLSlice, nil
 }
 
 func (s *InMemory) Get(key string) (URLRecord, error) {

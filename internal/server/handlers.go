@@ -19,8 +19,20 @@ import (
 	"go-url-shortener/internal/storage"
 )
 
-func (s *Server) GetUserURLsHandler(writer http.ResponseWriter, request *http.Request) {
-	//TODO:
+func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r)
+	if err != nil && user != "" {
+		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
+		return
+	}
+	records := s.storage.GetByUser(user)
+	if len(records) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	answer, err := json.Marshal(records)
+	w.Write(answer)
 }
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 
