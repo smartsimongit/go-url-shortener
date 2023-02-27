@@ -22,7 +22,7 @@ import (
 func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := getUser(r)
 	if err != nil || user == "" {
-		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
+		http.Error(w, ErrServer.Error(), http.StatusBadRequest)
 		return
 	}
 	records, err := s.storage.GetByUser(user)
@@ -32,6 +32,10 @@ func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	answer, err := json.Marshal(records)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	w.Write(answer)
 }
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
