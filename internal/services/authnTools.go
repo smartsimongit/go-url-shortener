@@ -10,6 +10,10 @@ import (
 
 var key = generateRandom(16)
 
+var (
+	AuthnCookieName = "token"
+)
+
 func SignName(userName string) []byte {
 	h := hmac.New(sha256.New, key)
 	h.Write([]byte(userName))

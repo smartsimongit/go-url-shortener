@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/gorilla/mux"
 	"go-url-shortener/internal/services"
 
@@ -12,14 +13,14 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	services.ConfigApp()
 	store := storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue)
 	router := mux.NewRouter()
-	serv := server.New(store)
-	router.HandleFunc("/{id}", serv.GetHandler)
-	router.HandleFunc("/", serv.PostHandler)
-	router.HandleFunc("/api/shorten", serv.PostJSONHandler)
-	log.Fatal(http.ListenAndServe(services.AppConfig.ServerAddressValue, server.Middleware(router)))
+	serv := server.New(ctx, store)
+
+	serv.AddRoutes(router)
+	log.Fatal(http.ListenAndServe(services.AppConfig.ServerAddressValue, serv.Middleware(router)))
 
 	//1.Выдавать пользователю симметрично подписанную куку, содержащую уникальный идентификатор пользователя,
 	//2.если такой куки не существует или она не проходит проверку подлинности.

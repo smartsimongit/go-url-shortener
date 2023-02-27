@@ -8,7 +8,7 @@ var (
 )
 
 type Storage interface {
-	Get(key string) (string, error)
-	Put(key, value string) error
-	GetAll() map[string]string
+	Get(key string) (URLRecord, error)
+	Put(key string, value URLRecord) error
+	GetAll() map[string]URLRecord
 }
