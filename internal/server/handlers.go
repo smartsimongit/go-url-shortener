@@ -25,8 +25,8 @@ func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
 	}
-	records := s.storage.GetByUser(user)
-	if len(records) == 0 {
+	records, err := s.storage.GetByUser(user)
+	if err != nil || len(records) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
