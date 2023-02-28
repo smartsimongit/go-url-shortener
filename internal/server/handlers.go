@@ -30,8 +30,9 @@ func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
 	answer, err := json.Marshal(records)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
