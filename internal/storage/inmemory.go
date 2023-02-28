@@ -64,8 +64,6 @@ func (s *InMemory) GetByUser(usr string) ([]URLRecord, error) {
 	defer s.lock.Unlock()
 	shortURLSlice := []URLRecord{}
 	for _, v := range s.m {
-		fmt.Println("usr in ", usr)
-		fmt.Println("usr out ", v.User.ID)
 		if usr == v.User.ID {
 			shortURL := URLRecord{
 				OriginalURL: v.OriginalURL,

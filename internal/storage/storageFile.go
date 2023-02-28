@@ -3,7 +3,6 @@ package storage
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 )
@@ -77,13 +76,11 @@ func saveSortURLs(fileForSave string, shortURLs *URLRecords) bool {
 func restoreShortURLs(fileForSave string) *URLRecords {
 	consumer, err := NewConsumer(fileForSave)
 	if err != nil {
-		fmt.Println(err.Error())
 		log.Fatal(err)
 	}
 	defer consumer.Close()
 	shortURLs, err := consumer.ReadShortURLs()
 	if err != nil {
-		fmt.Println(err.Error())
 		log.Fatal(err)
 	}
 	return shortURLs

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"go-url-shortener/internal/services"
 	"io"
 	"net/http"
@@ -189,7 +188,6 @@ func TestHandlers_PostJSONHandlerErrorStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			statusCode, body := testRequest(t, ts, method, path, bytes.NewBuffer([]byte((tt.body))))
-			fmt.Println(body)
 			assert.Equal(t, tt.want.code, statusCode)
 			assert.NotEmpty(t, body)
 		})
@@ -230,7 +228,6 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 			assert.Nil(t, err)
 			defer resp.Body.Close()
 			contentType := resp.Header.Get("Content-Type")
-			fmt.Println(string(respBody))
 			assert.NotEmpty(t, respBody)
 			assert.True(t, isJSON(string(respBody)))
 			assert.Equal(t, tt.want.code, resp.StatusCode)
