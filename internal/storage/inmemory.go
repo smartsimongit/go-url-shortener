@@ -16,15 +16,15 @@ type URLRecord struct {
 	ID          string `json:"ID,omitempty"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
-	User        User   `json:"User,omitempty"`
+	User        User   `json:"user,omitempty"`
+}
+
+type User struct {
+	ID string `json:"ID,omitempty"`
 }
 
 type URLRecords struct {
 	URLRecords []URLRecord `json:"url_record"`
-}
-
-type User struct {
-	ID string `json:"ID"`
 }
 
 func NewInMemory() *InMemory {
@@ -64,6 +64,8 @@ func (s *InMemory) GetByUser(usr string) ([]URLRecord, error) {
 	defer s.lock.Unlock()
 	shortURLSlice := []URLRecord{}
 	for _, v := range s.m {
+		fmt.Println("usr in ", usr)
+		fmt.Println("usr out ", v.User.ID)
 		if usr == v.User.ID {
 			shortURL := URLRecord{
 				OriginalURL: v.OriginalURL,

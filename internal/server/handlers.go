@@ -21,26 +21,47 @@ import (
 
 func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := getUser(r)
+
 	if err != nil || user == "" {
 		http.Error(w, ErrServer.Error(), http.StatusBadRequest)
 		return
 	}
 	records, err := s.storage.GetByUser(user)
+
 	if err != nil || len(records) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
+	urlPair := recordsToURLDto(records)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	answer, err := json.Marshal(records)
+	answer, err := json.Marshal(urlPair)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("answer is ", string(answer))
+	fmt.Println("answer is ", string(answer)) //TODO:
 	w.Write(answer)
 }
+
+func recordsToURLDto(records []storage.URLRecord) []URLDto {
+	var uRLDtoSlice []URLDto
+	for _, v := range records {
+		uRLDto := URLDto{
+			OriginalURL: v.OriginalURL,
+			ShortURL:    v.ShortURL,
+		}
+		uRLDtoSlice = append(uRLDtoSlice, uRLDto)
+	}
+	return uRLDtoSlice
+}
+
+type URLDto struct {
+	ShortURL    string `json:"short_url,omitempty"`
+	OriginalURL string `json:"original_url,omitempty"`
+}
+
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Path != "/" {
