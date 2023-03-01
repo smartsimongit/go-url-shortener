@@ -13,11 +13,12 @@ type Server struct {
 }
 
 func (s *Server) AddRoutes(router *mux.Router) {
+	router.HandleFunc("/ping", s.GetPingHandler)
 	router.HandleFunc("/{id}", s.GetHandler)
 	router.HandleFunc("/", s.PostHandler)
 	router.HandleFunc("/api/shorten", s.PostJSONHandler)
 	router.HandleFunc("/api/user/urls", s.GetUserURLsHandler)
-	router.HandleFunc("/ping", s.GetPingHandler)
+
 }
 
 func New(ctx context.Context, storage storage.Storage) *Server {

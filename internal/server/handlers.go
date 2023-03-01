@@ -21,7 +21,7 @@ import (
 
 func (s *Server) GetPingHandler(w http.ResponseWriter, r *http.Request) {
 	if !s.repo.PingConnection(s.ctx) {
-		http.Error(w, ErrPingConnection.Error(), http.StatusBadRequest)
+		http.Error(w, ErrPingConnection.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
