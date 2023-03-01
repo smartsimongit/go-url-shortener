@@ -25,7 +25,6 @@ func (s *Server) GetPingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	return
 }
 
 func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {

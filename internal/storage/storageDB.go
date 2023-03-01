@@ -11,7 +11,7 @@ import (
 
 func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
-	url := services.AppConfig.BdAddressURL
+	url := services.AppConfig.DbAddressURL
 
 	cfg, err := pgxpool.ParseConfig(url)
 	if err != nil {
@@ -51,8 +51,8 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) PingConnection(ctx context.Context) bool {
 	err := r.pool.Ping(ctx)
-	if err != nil {
-		return false
+	if err == nil {
+		return true
 	}
-	return true
+	return false
 }

@@ -16,16 +16,16 @@ type appConfigStruct struct {
 	ServerAddressValue  string
 	BaseURLValue        string
 	FileStorageURLValue string
-	BdAddressURL        string
+	DbAddressURL        string
 }
 
 var AppConfig appConfigStruct
 
 func ConfigApp() {
 
-	AppConfig.BdAddressURL = os.Getenv(bdAddressURL)
-	if AppConfig.BdAddressURL == "" {
-		flag.StringVar(&AppConfig.BdAddressURL, "d", ":8080", "bd address url")
+	AppConfig.DbAddressURL = os.Getenv(bdAddressURL)
+	if AppConfig.DbAddressURL == "" {
+		flag.StringVar(&AppConfig.DbAddressURL, "d", ":8080", "bd address url")
 	}
 
 	AppConfig.ServerAddressValue = os.Getenv(serverAddress)
