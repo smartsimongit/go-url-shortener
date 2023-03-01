@@ -15,7 +15,6 @@ import (
 
 func main() {
 	ctx := context.Background()
-
 	services.ConfigApp()
 	store := storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue)
 	router := mux.NewRouter()
