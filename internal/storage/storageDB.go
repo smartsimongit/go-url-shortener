@@ -12,7 +12,6 @@ import (
 func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
 	url := services.AppConfig.DBAddressURL
-	//url := "postgres://postgres:postgrespw@localhost:55000"
 
 	cfg, err := pgxpool.ParseConfig(url)
 	if err != nil {
