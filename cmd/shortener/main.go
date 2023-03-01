@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
 	"go-url-shortener/internal/services"
 
@@ -15,16 +16,16 @@ import (
 func main() {
 	ctx := context.Background()
 
-	dbpool, err := storage.InitDBConn(ctx)
-	if err != nil {
-		log.Fatalf("%w failed to init DB connection", err)
-	}
-
 	services.ConfigApp()
 	store := storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue)
 	router := mux.NewRouter()
-	serv := server.NewWithDB(ctx, store, storage.NewRepository(dbpool))
 
+	dbpool, err := storage.InitDBConn(ctx)
+	serv := server.New(ctx, store)
+	if err == nil {
+		fmt.Println("init server with BD")
+		serv = server.NewWithDB(ctx, store, storage.NewRepository(dbpool))
+	}
 	serv.AddRoutes(router)
 	log.Fatal(http.ListenAndServe(services.AppConfig.ServerAddressValue, serv.Middleware(router)))
 
