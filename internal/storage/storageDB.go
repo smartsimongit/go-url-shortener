@@ -52,8 +52,5 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) PingConnection(ctx context.Context) bool {
 	err := r.pool.Ping(ctx)
-	if err == nil {
-		return true
-	}
-	return false
+	return err == nil
 }
