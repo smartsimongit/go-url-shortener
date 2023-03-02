@@ -13,14 +13,14 @@ type InMemory struct {
 }
 
 type URLRecord struct {
-	ID          string `json:"ID,omitempty"`
+	ID          string `json:"id,omitempty"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 	User        User   `json:"user,omitempty"`
 }
 
 type User struct {
-	ID string `json:"ID,omitempty"`
+	ID string `json:"id,omitempty"`
 }
 
 type URLRecords struct {
