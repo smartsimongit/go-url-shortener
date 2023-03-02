@@ -19,11 +19,11 @@ func main() {
 	store := storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue)
 	router := mux.NewRouter()
 
-	dbpool, err := storage.InitDBConn(ctx)
 	serv := server.New(ctx, store)
+	dbpool, err := storage.InitDBConn(ctx)
 	if err == nil {
 		fmt.Println("init server with BD")
-		serv = server.NewWithDB(ctx, store, storage.NewRepository(dbpool))
+		serv = server.New(ctx, storage.NewRepository(dbpool))
 	}
 	serv.AddRoutes(router)
 	log.Fatal(http.ListenAndServe(services.AppConfig.ServerAddressValue, serv.Middleware(router)))

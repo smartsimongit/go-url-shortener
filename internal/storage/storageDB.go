@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
-	"go-url-shortener/internal/services"
 	"log"
 
 	"context"
@@ -13,7 +12,8 @@ import (
 
 func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
-	url := services.AppConfig.DBAddressURL //url := "postgres://postgres:postgres@localhost:5432/postgres"
+	//url := services.AppConfig.DBAddressURL
+	url := "postgres://postgres:postgres@localhost:5432/postgres"
 
 	if url == "" {
 		err = fmt.Errorf("failed to get url: %w", err)
@@ -64,9 +64,40 @@ func (r *Repository) PingConnection(ctx context.Context) bool {
 
 func (r *Repository) createTables() {
 	ctx := context.Background()
-	_, err := r.pool.Query(ctx, "create table if not exists public.link_pairs(id varchar(64) primary key, short_url    varchar(64)  not null, original_url varchar(256) not null, usr varchar(64)  not null);")
+	_, err := r.pool.Exec(ctx, "create table if not exists public.link_pairs(id varchar(64) primary key, short_url    varchar(64)  not null, original_url varchar(256) not null, usr varchar(64)  not null);")
 	if err != nil {
 		fmt.Println("таблица не создалась ", err.Error())
 		log.Fatal(err)
 	}
+}
+func (r *Repository) Get(key string, ctx context.Context) (URLRecord, error) {
+	record := URLRecord{}
+
+	row := r.pool.QueryRow(ctx,
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.id = $1",
+		key)
+
+	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID)
+	if err != nil {
+		fmt.Println("ошибка чтения ", err.Error())
+		return record, err
+	}
+	return record, err
+}
+
+func (r *Repository) Put(key string, value URLRecord, ctx context.Context) error {
+	_, err := r.pool.Exec(ctx,
+		"INSERT INTO public.link_pairs lp(id, short_url, original_url, usr) VALUES($1,$2,$3,$4)",
+		key, value.ShortURL, value.OriginalURL, value.User.ID)
+	if err != nil {
+		fmt.Println("ошибка записи ", err.Error())
+		return err
+	}
+	return nil
+}
+func (r *Repository) GetAll(ctx context.Context) map[string]URLRecord {
+	return nil //TODO:
+}
+func (r *Repository) GetByUser(usr string, ctx context.Context) ([]URLRecord, error) {
+	return nil, nil //TODO:
 }
