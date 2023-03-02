@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go-url-shortener/internal/services"
 	"log"
 
 	"context"
@@ -12,8 +13,8 @@ import (
 
 func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
-	//url := services.AppConfig.DBAddressURL
-	url := "postgres://postgres:postgres@localhost:5432/postgres"
+	url := services.AppConfig.DBAddressURL
+	//url := "postgres://postgres:postgres@localhost:5432/postgres"
 
 	if url == "" {
 		err = fmt.Errorf("failed to get url: %w", err)
@@ -99,5 +100,24 @@ func (r *Repository) GetAll(ctx context.Context) map[string]URLRecord {
 	return nil //TODO:
 }
 func (r *Repository) GetByUser(usr string, ctx context.Context) ([]URLRecord, error) {
-	return nil, nil //TODO:
+	shortURLSlice := []URLRecord{}
+	rows, err := r.pool.Query(ctx,
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.usr = $1",
+		usr)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	defer rows.Close()
+
+	// пробегаем по всем записям
+	for rows.Next() {
+		var r URLRecord
+		err = rows.Scan(&r.ID, &r.ShortURL, &r.OriginalURL, &r.User.ID)
+		if err != nil {
+			return nil, err
+		}
+		shortURLSlice = append(shortURLSlice, r)
+	}
+	return shortURLSlice, nil
 }
