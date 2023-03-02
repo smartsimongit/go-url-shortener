@@ -96,14 +96,20 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 		ShortURL:    createURL(genString),
 		OriginalURL: incomingURL,
 		User:        storage.User{ID: user}}
-	err = s.storage.Put(genString, rec, s.ctx)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	httpStatus := http.StatusCreated
+	recBd, err := s.storage.GetByURL(incomingURL, s.ctx)
+	if err == nil {
+		rec = recBd
+		httpStatus = http.StatusConflict
+	} else {
+		err = s.storage.Put(genString, rec, s.ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(createURL(genString)))
+	w.WriteHeader(httpStatus)
+	w.Write([]byte(rec.ShortURL))
 }
 
 func getUser(r *http.Request) (string, error) {
@@ -137,7 +143,6 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
 	}
-
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -150,20 +155,25 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
 	}
-
 	genString := genString()
 	rec := storage.URLRecord{ID: genString,
 		ShortURL:    createURL(genString),
 		OriginalURL: req.URL,
 		User:        storage.User{ID: user}}
-
-	err = s.storage.Put(genString, rec, s.ctx)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	httpStatus := http.StatusCreated
+	recBd, err := s.storage.GetByURL(req.URL, s.ctx)
+	if err == nil {
+		rec = recBd
+		httpStatus = http.StatusConflict
+	} else {
+		err = s.storage.Put(genString, rec, s.ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 	resp := responseJSON{
-		ShortURL: createURL(genString),
+		ShortURL: rec.ShortURL,
 	}
 	answer, err := json.Marshal(resp)
 	if err != nil {
@@ -171,7 +181,7 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(httpStatus)
 
 	w.Write(answer)
 }

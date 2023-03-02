@@ -85,8 +85,22 @@ func (r *Repository) Get(key string, ctx context.Context) (URLRecord, error) {
 	return record, err
 }
 
+func (r *Repository) GetByURL(url string, ctx context.Context) (URLRecord, error) {
+	record := URLRecord{}
+
+	row := r.pool.QueryRow(ctx,
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.original_url = $1",
+		url)
+
+	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID)
+	if err != nil {
+		fmt.Println("ошибка чтения ", err.Error())
+		return record, err
+	}
+	return record, err
+}
+
 func (r *Repository) Put(key string, value URLRecord, ctx context.Context) error {
-	//TODO: Перевести на стейтмент
 	_, err := r.pool.Exec(ctx,
 		"INSERT INTO public.link_pairs (id, short_url, original_url, usr) VALUES($1,$2,$3,$4)",
 		key, value.ShortURL, value.OriginalURL, value.User.ID)
@@ -95,9 +109,25 @@ func (r *Repository) Put(key string, value URLRecord, ctx context.Context) error
 		return err
 	}
 	return nil
+
 }
 func (r *Repository) GetAll(ctx context.Context) map[string]URLRecord {
-	return nil //TODO:
+	shortURLMap := make(map[string]URLRecord)
+	rows, err := r.pool.Query(ctx,
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp")
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var r URLRecord
+		err = rows.Scan(&r.ID, &r.ShortURL, &r.OriginalURL, &r.User.ID)
+		if err != nil {
+			return nil
+		}
+		shortURLMap[r.ID] = r
+	}
+	return shortURLMap
 }
 func (r *Repository) GetByUser(usr string, ctx context.Context) ([]URLRecord, error) {
 	shortURLSlice := []URLRecord{}
@@ -108,9 +138,6 @@ func (r *Repository) GetByUser(usr string, ctx context.Context) ([]URLRecord, er
 		return nil, err
 	}
 	defer rows.Close()
-	defer rows.Close()
-
-	// пробегаем по всем записям
 	for rows.Next() {
 		var r URLRecord
 		err = rows.Scan(&r.ID, &r.ShortURL, &r.OriginalURL, &r.User.ID)
