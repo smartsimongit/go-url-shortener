@@ -280,11 +280,11 @@ func readCookie(name string, r *http.Request) (value string, err error) {
 }
 
 type urlBatchReq struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
 type urlBatchResp struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
 }
 
@@ -314,7 +314,7 @@ func (s *Server) PostBatchURLsHandler(w http.ResponseWriter, r *http.Request) {
 		genString := genString()
 		shortURL := createURL(genString)
 		urlBatchResp := urlBatchResp{
-			CorrelationId: url.CorrelationId,
+			CorrelationID: url.CorrelationID,
 			ShortURL:      shortURL,
 		}
 		urlBatchResponses = append(urlBatchResponses, urlBatchResp)
