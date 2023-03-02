@@ -87,7 +87,7 @@ func (r *Repository) Get(key string, ctx context.Context) (URLRecord, error) {
 
 func (r *Repository) Put(key string, value URLRecord, ctx context.Context) error {
 	_, err := r.pool.Exec(ctx,
-		"INSERT INTO public.link_pairs lp(id, short_url, original_url, usr) VALUES($1,$2,$3,$4)",
+		"INSERT INTO public.link_pairs (id, short_url, original_url, usr) VALUES($1,$2,$3,$4)",
 		key, value.ShortURL, value.OriginalURL, value.User.ID)
 	if err != nil {
 		fmt.Println("ошибка записи ", err.Error())
