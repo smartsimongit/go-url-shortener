@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
-	"go-url-shortener/internal/services"
 	"log"
 
 	"context"
@@ -13,8 +12,8 @@ import (
 
 func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
-	url := services.AppConfig.DBAddressURL
-	//url := "postgres://postgres:postgres@localhost:5432/postgres"
+	//url := services.AppConfig.DBAddressURL
+	url := "postgres://postgres:postgres@localhost:5432/postgres"
 
 	if url == "" {
 		err = fmt.Errorf("failed to get url: %w", err)
