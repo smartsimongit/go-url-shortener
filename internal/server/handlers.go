@@ -97,7 +97,7 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 		OriginalURL: incomingURL,
 		User:        storage.User{ID: user}}
 	httpStatus := http.StatusCreated
-	recBd, err := s.storage.GetByURL(incomingURL, s.ctx)
+	recBd, err := s.storage.GetByURL(incomingURL, s.ctx) //TODO:Перепи
 	if err == nil {
 		rec = recBd
 		httpStatus = http.StatusConflict
