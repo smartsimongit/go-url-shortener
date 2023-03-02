@@ -117,5 +117,5 @@ func (s *InMemory) PutAll(records []URLRecord, ctx context.Context) error {
 	return nil
 }
 func (s *InMemory) GetByURL(url string, ctx context.Context) (URLRecord, error) {
-	return URLRecord{}, ErrAlreadyExists
+	return URLRecord{}, ErrNotFound
 }
