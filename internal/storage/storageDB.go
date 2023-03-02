@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
-	"go-url-shortener/internal/services"
 	"log"
 
 	"context"
@@ -13,8 +12,8 @@ import (
 
 func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
-	url := services.AppConfig.DBAddressURL
-	//url := "postgres://postgres:postgres@localhost:5432/postgres"
+	//url := services.AppConfig.DBAddressURL
+	url := "postgres://postgres:postgres@localhost:5432/postgres"
 
 	if url == "" {
 		err = fmt.Errorf("failed to get url: %w", err)
@@ -58,11 +57,6 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return r
 }
 
-func (r *Repository) PingConnection(ctx context.Context) bool {
-	err := r.pool.Ping(ctx)
-	return err == nil
-}
-
 func (r *Repository) createTables() {
 	ctx := context.Background()
 	_, err := r.pool.Exec(ctx, "create table if not exists public.link_pairs(id varchar(64) primary key, short_url    varchar(64)  not null, original_url varchar(256) not null, usr varchar(64)  not null);")
@@ -70,6 +64,10 @@ func (r *Repository) createTables() {
 		fmt.Println("таблица не создалась ", err.Error())
 		log.Fatal(err)
 	}
+}
+func (r *Repository) PingConnection(ctx context.Context) bool {
+	err := r.pool.Ping(ctx)
+	return err == nil
 }
 func (r *Repository) Get(key string, ctx context.Context) (URLRecord, error) {
 	record := URLRecord{}

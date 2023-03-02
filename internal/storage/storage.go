@@ -15,6 +15,7 @@ type Storage interface {
 	Put(key string, value URLRecord, ctx context.Context) error
 	GetAll(ctx context.Context) map[string]URLRecord
 	GetByUser(usr string, ctx context.Context) ([]URLRecord, error)
+	PingConnection(ctx context.Context) bool
 }
 
 type URLRecord struct {

@@ -109,3 +109,7 @@ func createMapFromShortURLs(shortURLs *URLRecords) map[string]URLRecord {
 	}
 	return m
 }
+
+func (s *InMemory) PingConnection(ctx context.Context) bool {
+	return true
+}
