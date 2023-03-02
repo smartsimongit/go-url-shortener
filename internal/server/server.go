@@ -15,6 +15,7 @@ func (s *Server) AddRoutes(router *mux.Router) {
 	router.HandleFunc("/ping", s.GetPingHandler)
 	router.HandleFunc("/{id}", s.GetHandler)
 	router.HandleFunc("/", s.PostHandler)
+	router.HandleFunc("/api/shorten/batch", s.PostBatchURLsHandler)
 	router.HandleFunc("/api/shorten", s.PostJSONHandler)
 	router.HandleFunc("/api/user/urls", s.GetUserURLsHandler)
 

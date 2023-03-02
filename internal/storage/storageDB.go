@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
-	"go-url-shortener/internal/services"
 	"log"
 
 	"context"
@@ -13,8 +12,8 @@ import (
 
 func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
-	url := services.AppConfig.DBAddressURL
-	//url := "postgres://postgres:postgres@localhost:5432/postgres"
+	//url := services.AppConfig.DBAddressURL
+	url := "postgres://postgres:postgres@localhost:5432/postgres"
 
 	if url == "" {
 		err = fmt.Errorf("failed to get url: %w", err)
@@ -86,6 +85,7 @@ func (r *Repository) Get(key string, ctx context.Context) (URLRecord, error) {
 }
 
 func (r *Repository) Put(key string, value URLRecord, ctx context.Context) error {
+	//TODO: Перевести на стейтмент
 	_, err := r.pool.Exec(ctx,
 		"INSERT INTO public.link_pairs (id, short_url, original_url, usr) VALUES($1,$2,$3,$4)",
 		key, value.ShortURL, value.OriginalURL, value.User.ID)
@@ -119,4 +119,18 @@ func (r *Repository) GetByUser(usr string, ctx context.Context) ([]URLRecord, er
 		shortURLSlice = append(shortURLSlice, r)
 	}
 	return shortURLSlice, nil
+}
+
+func (r *Repository) PutAll(records []URLRecord, ctx context.Context) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	for _, v := range records {
+		if _, err = r.pool.Exec(ctx, "INSERT INTO public.link_pairs (id, short_url, original_url, usr) VALUES($1,$2,$3,$4)", v.ID, v.ShortURL, v.OriginalURL, v.User.ID); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
 }

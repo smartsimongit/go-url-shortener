@@ -113,3 +113,6 @@ func createMapFromShortURLs(shortURLs *URLRecords) map[string]URLRecord {
 func (s *InMemory) PingConnection(ctx context.Context) bool {
 	return true
 }
+func (s *InMemory) PutAll(records []URLRecord, ctx context.Context) error {
+	return nil
+}
