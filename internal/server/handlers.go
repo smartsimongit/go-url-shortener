@@ -20,7 +20,7 @@ import (
 )
 
 func (s *Server) GetPingHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.repo.PingConnection(s.ctx) {
+	if !s.storage.PingConnection(s.ctx) {
 		http.Error(w, ErrPingConnection.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -34,7 +34,7 @@ func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, ErrServer.Error(), http.StatusInternalServerError)
 		return
 	}
-	records, err := s.storage.GetByUser(user)
+	records, err := s.storage.GetByUser(user, s.ctx)
 
 	if err != nil || len(records) == 0 {
 		w.WriteHeader(http.StatusNoContent)
@@ -96,7 +96,7 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 		ShortURL:    createURL(genString),
 		OriginalURL: incomingURL,
 		User:        storage.User{ID: user}}
-	err = s.storage.Put(genString, rec)
+	err = s.storage.Put(genString, rec, s.ctx)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -122,7 +122,7 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, ErrIDParamIsMissing.Error(), http.StatusBadRequest)
 		return
 	}
-	longURL, err := s.storage.Get(id)
+	longURL, err := s.storage.Get(id, s.ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -157,7 +157,7 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 		OriginalURL: req.URL,
 		User:        storage.User{ID: user}}
 
-	err = s.storage.Put(genString, rec)
+	err = s.storage.Put(genString, rec, s.ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

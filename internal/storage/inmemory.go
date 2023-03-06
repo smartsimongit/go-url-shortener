@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
@@ -10,21 +11,6 @@ var fileForSave string
 type InMemory struct {
 	lock sync.Mutex
 	m    map[string]URLRecord
-}
-
-type URLRecord struct {
-	ID          string `json:"ID,omitempty"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-	User        User   `json:"user,omitempty"`
-}
-
-type User struct {
-	ID string `json:"ID,omitempty"`
-}
-
-type URLRecords struct {
-	URLRecords []URLRecord `json:"url_record"`
 }
 
 func NewInMemory() *InMemory {
@@ -53,13 +39,13 @@ func NewInMemoryWithFile(fileName string) *InMemory {
 
 }
 
-func (s *InMemory) GetAll() map[string]URLRecord {
+func (s *InMemory) GetAll(ctx context.Context) map[string]URLRecord {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	return s.m
 }
 
-func (s *InMemory) GetByUser(usr string) ([]URLRecord, error) {
+func (s *InMemory) GetByUser(usr string, ctx context.Context) ([]URLRecord, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	shortURLSlice := []URLRecord{}
@@ -75,7 +61,7 @@ func (s *InMemory) GetByUser(usr string) ([]URLRecord, error) {
 	return shortURLSlice, nil
 }
 
-func (s *InMemory) Get(key string) (URLRecord, error) {
+func (s *InMemory) Get(key string, ctx context.Context) (URLRecord, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -85,7 +71,7 @@ func (s *InMemory) Get(key string) (URLRecord, error) {
 	return URLRecord{}, ErrNotFound
 }
 
-func (s *InMemory) Put(key string, record URLRecord) error {
+func (s *InMemory) Put(key string, record URLRecord, ctx context.Context) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if _, ok := s.m[key]; ok {
@@ -122,4 +108,8 @@ func createMapFromShortURLs(shortURLs *URLRecords) map[string]URLRecord {
 		}
 	}
 	return m
+}
+
+func (s *InMemory) PingConnection(ctx context.Context) bool {
+	return true
 }

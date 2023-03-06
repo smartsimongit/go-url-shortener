@@ -9,7 +9,6 @@ import (
 type Server struct {
 	ctx     context.Context
 	storage storage.Storage
-	repo    *storage.Repository
 }
 
 func (s *Server) AddRoutes(router *mux.Router) {
@@ -25,12 +24,5 @@ func New(ctx context.Context, storage storage.Storage) *Server {
 	return &Server{
 		ctx:     ctx,
 		storage: storage,
-	}
-}
-func NewWithDB(ctx context.Context, storage storage.Storage, repo *storage.Repository) *Server {
-	return &Server{
-		ctx:     ctx,
-		storage: storage,
-		repo:    repo,
 	}
 }
