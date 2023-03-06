@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
+func New(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
 	url := services.AppConfig.DBAddressURL
 	//url := "postgres://postgres:postgres@localhost:5432/postgres"
@@ -47,7 +47,6 @@ func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
 }
 
-// REPO
 type Repository struct {
 	pool *pgxpool.Pool
 }

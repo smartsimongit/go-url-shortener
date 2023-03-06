@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"github.com/gorilla/mux"
 
 	"compress/gzip"
@@ -20,7 +21,9 @@ import (
 )
 
 func (s *Server) GetPingHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.storage.PingConnection(s.ctx) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	if !s.storage.PingConnection(ctx) {
 		http.Error(w, ErrPingConnection.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -28,13 +31,16 @@ func (s *Server) GetPingHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
 	user, err := getUser(r)
 
 	if err != nil || user == "" {
 		http.Error(w, ErrServer.Error(), http.StatusInternalServerError)
 		return
 	}
-	records, err := s.storage.GetByUser(user, s.ctx)
+	records, err := s.storage.GetByUser(user, ctx)
 
 	if err != nil || len(records) == 0 {
 		w.WriteHeader(http.StatusNoContent)
@@ -70,7 +76,8 @@ type URLDto struct {
 }
 
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
-
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
 	if r.URL.Path != "/" {
 		http.Error(w, ErrIncorrectPostURL.Error(), http.StatusBadRequest)
 		return
@@ -97,17 +104,19 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 		OriginalURL: incomingURL,
 		User:        storage.User{ID: user}}
 	httpStatus := http.StatusCreated
-	recBd, err := s.storage.GetByURL(incomingURL, s.ctx) //TODO:Перепи
-	if err == nil {
-		rec = recBd
-		httpStatus = http.StatusConflict
-	} else {
-		err = s.storage.Put(genString, rec, s.ctx)
+	recBd, err := s.storage.GetByURL(incomingURL, ctx)
+	if err != nil {
+		err = s.storage.Put(genString, rec, ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		w.WriteHeader(httpStatus)
+		w.Write([]byte(rec.ShortURL))
+		return
 	}
+	rec = recBd
+	httpStatus = http.StatusConflict
 	w.WriteHeader(httpStatus)
 	w.Write([]byte(rec.ShortURL))
 }
@@ -122,13 +131,15 @@ func getUser(r *http.Request) (string, error) {
 }
 
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
 	if !ok {
 		http.Error(w, ErrIDParamIsMissing.Error(), http.StatusBadRequest)
 		return
 	}
-	longURL, err := s.storage.Get(id, s.ctx)
+	longURL, err := s.storage.Get(id, ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -138,6 +149,8 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
 	user, err := getUser(r)
 	if err != nil && user != "" {
 		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
@@ -161,12 +174,12 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 		OriginalURL: req.URL,
 		User:        storage.User{ID: user}}
 	httpStatus := http.StatusCreated
-	recBd, err := s.storage.GetByURL(req.URL, s.ctx)
+	recBd, err := s.storage.GetByURL(req.URL, ctx)
 	if err == nil {
 		rec = recBd
 		httpStatus = http.StatusConflict
 	} else {
-		err = s.storage.Put(genString, rec, s.ctx)
+		err = s.storage.Put(genString, rec, ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -197,12 +210,9 @@ type responseJSON struct {
 func (s *Server) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := getTokenCookie(r)
-		if err == nil && token != "" && services.VerifyToken(token) {
-			user := services.GetUserFromToken(token)
-			fmt.Println("existed user is ", user)
-		} else {
+		if err != nil || token == "" || !services.VerifyToken(token) {
 			userName := genString()
-			fmt.Println("new user is ", userName)
+			fmt.Println("new user is ", userName) //TODO:
 			encr := services.SignName(userName)
 			cookieString := hex.EncodeToString(append([]byte(userName), encr...))
 			cookie := http.Cookie{Name: services.AuthnCookieName, Value: cookieString}
@@ -299,6 +309,8 @@ type urlBatchResp struct {
 }
 
 func (s *Server) PostBatchURLsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
 	user, err := getUser(r)
 	if err != nil && user != "" {
 		http.Error(w, "User is expected", http.StatusBadRequest)
@@ -337,7 +349,7 @@ func (s *Server) PostBatchURLsHandler(w http.ResponseWriter, r *http.Request) {
 		records = append(records, rec)
 	}
 
-	err = s.storage.PutAll(records, s.ctx)
+	err = s.storage.PutAll(records, ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

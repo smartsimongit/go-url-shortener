@@ -20,7 +20,7 @@ func main() {
 	router := mux.NewRouter()
 
 	serv := server.New(ctx, store)
-	dbpool, err := storage.InitDBConn(ctx)
+	dbpool, err := storage.New(ctx)
 	if err == nil {
 		fmt.Println("init server with BD")
 		serv = server.New(ctx, storage.NewRepository(dbpool))
