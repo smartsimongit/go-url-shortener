@@ -18,7 +18,7 @@ func New(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
 	if url == "" {
 		err = fmt.Errorf("failed to get url: %w", err)
-		return
+		return nil, err
 	}
 
 	cfg, err := pgxpool.ParseConfig(url)
@@ -61,6 +61,7 @@ func (r *Repository) createTables() {
 	ctx := context.Background()
 	_, err := r.pool.Exec(ctx, "create table if not exists public.link_pairs(id varchar(64) primary key, short_url    varchar(64)  not null, original_url varchar(256) not null UNIQUE, usr varchar(64)  not null);")
 	if err != nil {
+
 		fmt.Println("таблица не создалась ", err.Error())
 		log.Fatal(err)
 	}

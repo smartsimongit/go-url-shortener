@@ -3,12 +3,12 @@ package server
 import (
 	"context"
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 
 	"compress/gzip"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -212,7 +212,8 @@ func (s *Server) Middleware(next http.Handler) http.Handler {
 		token, err := getTokenCookie(r)
 		if err != nil || token == "" || !services.VerifyToken(token) {
 			userName := genString()
-			fmt.Println("new user is ", userName) //TODO:
+			log.Info().Str("new_user", userName)
+
 			encr := services.SignName(userName)
 			cookieString := hex.EncodeToString(append([]byte(userName), encr...))
 			cookie := http.Cookie{Name: services.AuthnCookieName, Value: cookieString}

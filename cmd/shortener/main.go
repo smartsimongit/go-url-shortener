@@ -1,12 +1,12 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"go-url-shortener/internal/services"
 
-	"log"
+	"context"
 	"net/http"
 
 	"go-url-shortener/internal/server"
@@ -14,18 +14,19 @@ import (
 )
 
 func main() {
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	ctx := context.Background()
 	services.ConfigApp()
-	store := storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue)
+	store := storage.NewInMemory(storage.WithFile(services.AppConfig.FileStorageURLValue))
 	router := mux.NewRouter()
 
 	serv := server.New(ctx, store)
 	dbpool, err := storage.New(ctx)
 	if err == nil {
-		fmt.Println("init server with BD")
+		log.Info().Msg("init server with DB")
 		serv = server.New(ctx, storage.NewRepository(dbpool))
 	}
 	serv.AddRoutes(router)
-	log.Fatal(http.ListenAndServe(services.AppConfig.ServerAddressValue, serv.Middleware(router)))
+	log.Fatal().Err(http.ListenAndServe(services.AppConfig.ServerAddressValue, serv.Middleware(router)))
 
 }
