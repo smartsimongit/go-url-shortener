@@ -278,3 +278,68 @@ func readCookie(name string, r *http.Request) (value string, err error) {
 	value, _ = url.QueryUnescape(str)
 	return value, err
 }
+
+type urlBatchReq struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+type urlBatchResp struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
+}
+
+func (s *Server) PostBatchURLsHandler(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r)
+	if err != nil && user != "" {
+		http.Error(w, "User is expected", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
+		return
+	}
+	var req []urlBatchReq
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
+		return
+	}
+	var records []storage.URLRecord
+	var urlBatchResponses []urlBatchResp
+
+	for _, url := range req {
+
+		genString := genString()
+		shortURL := createURL(genString)
+		urlBatchResp := urlBatchResp{
+			CorrelationID: url.CorrelationID,
+			ShortURL:      shortURL,
+		}
+		urlBatchResponses = append(urlBatchResponses, urlBatchResp)
+		rec := storage.URLRecord{
+			ID:          genString,
+			ShortURL:    shortURL,
+			OriginalURL: url.OriginalURL,
+			User:        storage.User{ID: user},
+		}
+		records = append(records, rec)
+	}
+
+	err = s.storage.PutAll(records, s.ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	answer, err := json.Marshal(urlBatchResponses)
+	if err != nil {
+		http.Error(w, ErrCreatedResponse.Error(), http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	w.Write(answer)
+}
