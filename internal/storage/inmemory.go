@@ -9,15 +9,30 @@ var fileForSave string
 
 type InMemory struct {
 	lock sync.Mutex
-	m    map[string]string
+	m    map[string]URLRecord
+}
+
+type URLRecord struct {
+	ID          string `json:"ID,omitempty"`
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+	User        User   `json:"user,omitempty"`
+}
+
+type User struct {
+	ID string `json:"ID,omitempty"`
+}
+
+type URLRecords struct {
+	URLRecords []URLRecord `json:"url_record"`
 }
 
 func NewInMemory() *InMemory {
 	return &InMemory{
-		m: make(map[string]string),
+		m: make(map[string]URLRecord),
 	}
 }
-func newInMemoryWithMap(innerM map[string]string) *InMemory {
+func newInMemoryWithMap(innerM map[string]URLRecord) *InMemory {
 	return &InMemory{
 		m: innerM,
 	}
@@ -38,29 +53,45 @@ func NewInMemoryWithFile(fileName string) *InMemory {
 
 }
 
-func (s *InMemory) GetAll() map[string]string {
+func (s *InMemory) GetAll() map[string]URLRecord {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	return s.m
 }
 
-func (s *InMemory) Get(key string) (string, error) {
+func (s *InMemory) GetByUser(usr string) ([]URLRecord, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	shortURLSlice := []URLRecord{}
+	for _, v := range s.m {
+		if usr == v.User.ID {
+			shortURL := URLRecord{
+				OriginalURL: v.OriginalURL,
+				ShortURL:    v.ShortURL,
+			}
+			shortURLSlice = append(shortURLSlice, shortURL)
+		}
+	}
+	return shortURLSlice, nil
+}
+
+func (s *InMemory) Get(key string) (URLRecord, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	if v, ok := s.m[key]; ok {
 		return v, nil
 	}
-	return "", ErrNotFound
+	return URLRecord{}, ErrNotFound
 }
 
-func (s *InMemory) Put(key string, value string) error {
+func (s *InMemory) Put(key string, record URLRecord) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if _, ok := s.m[key]; ok {
 		return ErrAlreadyExists
 	}
-	s.m[key] = value
+	s.m[key] = record
 
 	if saveSortURLs(fileForSave, createShortURLsFromMap(s.m)) {
 		fmt.Println("ShortURLs saved in file ", fileForSave)
@@ -68,24 +99,26 @@ func (s *InMemory) Put(key string, value string) error {
 	return nil
 }
 
-func createShortURLsFromMap(m map[string]string) *ShortURLs {
-	shortURLSlice := []ShortURL{}
+func createShortURLsFromMap(m map[string]URLRecord) *URLRecords {
+	shortURLSlice := []URLRecord{}
 	for k, v := range m {
-		shortURL := ShortURL{
-			ID:      k,
-			LongURL: v,
+		shortURL := URLRecord{
+			ID:          k,
+			OriginalURL: v.OriginalURL,
+			ShortURL:    v.ShortURL,
+			User:        User{ID: v.User.ID},
 		}
 		shortURLSlice = append(shortURLSlice, shortURL)
 	}
-	shortURLs := &ShortURLs{ShortURLs: shortURLSlice}
+	shortURLs := &URLRecords{URLRecords: shortURLSlice}
 	return shortURLs
 }
-func createMapFromShortURLs(shortURLs *ShortURLs) map[string]string {
-	m := make(map[string]string)
+func createMapFromShortURLs(shortURLs *URLRecords) map[string]URLRecord {
+	m := make(map[string]URLRecord)
 	if shortURLs != nil {
-		shortURLsSlice := shortURLs.ShortURLs
+		shortURLsSlice := shortURLs.URLRecords
 		for i := range shortURLsSlice {
-			m[shortURLsSlice[i].ID] = shortURLsSlice[i].LongURL
+			m[shortURLsSlice[i].ID] = shortURLsSlice[i]
 		}
 	}
 	return m

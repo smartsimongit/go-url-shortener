@@ -9,4 +9,5 @@ var (
 	ErrIncorrectJSONRequest = errors.New("incorrect json requestJSON")
 	ErrCreatedResponse      = errors.New("error created responseJson")
 	ErrReadBodyRequest      = errors.New("error read body request")
+	ErrServer               = errors.New("error server")
 )

@@ -3,7 +3,6 @@ package storage
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 )
@@ -16,13 +15,6 @@ type producer struct {
 	file    *os.File
 	encoder *json.Encoder
 }
-type ShortURLs struct {
-	ShortURLs []ShortURL `json:"shortURL"`
-}
-type ShortURL struct {
-	ID      string `json:"id"`
-	LongURL string `json:"long_url"`
-}
 
 func NewConsumer(fileName string) (*consumer, error) {
 	file, err := os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0777)
@@ -34,12 +26,12 @@ func NewConsumer(fileName string) (*consumer, error) {
 		scanner: bufio.NewScanner(file),
 	}, nil
 }
-func (c *consumer) ReadShortURLs() (*ShortURLs, error) {
+func (c *consumer) ReadShortURLs() (*URLRecords, error) {
 	if !c.scanner.Scan() {
 		return nil, c.scanner.Err()
 	}
 	data := c.scanner.Bytes()
-	shortURLs := &ShortURLs{}
+	shortURLs := &URLRecords{}
 	err := json.Unmarshal(data, &shortURLs)
 	if err != nil {
 		return nil, err
@@ -60,14 +52,14 @@ func NewProducer(fileName string) (*producer, error) {
 		encoder: json.NewEncoder(file),
 	}, nil
 }
-func (p *producer) WriteShortURLs(shortURLs *ShortURLs) error {
+func (p *producer) WriteShortURLs(shortURLs *URLRecords) error {
 	return p.encoder.Encode(&shortURLs)
 }
 func (p *producer) Close() error {
 	return p.file.Close()
 }
 
-func saveSortURLs(fileForSave string, shortURLs *ShortURLs) bool {
+func saveSortURLs(fileForSave string, shortURLs *URLRecords) bool {
 	if fileForSave != "" {
 		producer, err := NewProducer(fileForSave)
 		if err != nil {
@@ -81,16 +73,14 @@ func saveSortURLs(fileForSave string, shortURLs *ShortURLs) bool {
 	}
 	return false
 }
-func restoreShortURLs(fileForSave string) *ShortURLs {
+func restoreShortURLs(fileForSave string) *URLRecords {
 	consumer, err := NewConsumer(fileForSave)
 	if err != nil {
-		fmt.Println(err.Error())
 		log.Fatal(err)
 	}
 	defer consumer.Close()
 	shortURLs, err := consumer.ReadShortURLs()
 	if err != nil {
-		fmt.Println(err.Error())
 		log.Fatal(err)
 	}
 	return shortURLs

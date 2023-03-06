@@ -2,8 +2,8 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"fmt"
 	"go-url-shortener/internal/services"
 	"io"
 	"net/http"
@@ -51,7 +51,7 @@ func TestHandlers_PostHandlerStatusCreated(t *testing.T) {
 	expectedStatus := http.StatusCreated
 	path := "/"
 
-	server := New(storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
+	server := New(context.Background(), storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc("/", server.PostHandler)
@@ -93,7 +93,7 @@ func TestHandlers_PostHandlerErrorStatuses(t *testing.T) {
 			},
 		},
 	}
-	server := New(storage.NewInMemory())
+	server := New(context.Background(), storage.NewInMemory())
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc("/", server.PostHandler)
@@ -142,7 +142,7 @@ func TestHandlers_GetHandlerErrorStatus(t *testing.T) {
 		},
 	}
 
-	server := New(storage.NewInMemory())
+	server := New(context.Background(), storage.NewInMemory())
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc("/", server.PostHandler)
@@ -179,7 +179,7 @@ func TestHandlers_PostJSONHandlerErrorStatus(t *testing.T) {
 	path := "/api/shorten"
 	method := "POST"
 
-	server := New(storage.NewInMemory())
+	server := New(context.Background(), storage.NewInMemory())
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc(path, server.PostJSONHandler)
@@ -188,7 +188,6 @@ func TestHandlers_PostJSONHandlerErrorStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			statusCode, body := testRequest(t, ts, method, path, bytes.NewBuffer([]byte((tt.body))))
-			fmt.Println(body)
 			assert.Equal(t, tt.want.code, statusCode)
 			assert.NotEmpty(t, body)
 		})
@@ -217,7 +216,7 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 			},
 		},
 	}
-	server := New(storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
+	server := New(context.Background(), storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -229,7 +228,6 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 			assert.Nil(t, err)
 			defer resp.Body.Close()
 			contentType := resp.Header.Get("Content-Type")
-			fmt.Println(string(respBody))
 			assert.NotEmpty(t, respBody)
 			assert.True(t, isJSON(string(respBody)))
 			assert.Equal(t, tt.want.code, resp.StatusCode)

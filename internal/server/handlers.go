@@ -1,10 +1,13 @@
 package server
 
 import (
-	"go-url-shortener/internal/services"
+	"github.com/gorilla/mux"
 
 	"compress/gzip"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -12,12 +15,61 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"go-url-shortener/internal/services"
+	"go-url-shortener/internal/storage"
 )
 
+func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r)
+
+	if err != nil || user == "" {
+		http.Error(w, ErrServer.Error(), http.StatusBadRequest)
+		return
+	}
+	records, err := s.storage.GetByUser(user)
+
+	if err != nil || len(records) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	urlPair := recordsToURLDto(records)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	answer, err := json.Marshal(urlPair)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.Write(answer)
+}
+
+func recordsToURLDto(records []storage.URLRecord) []URLDto {
+	var uRLDtoSlice []URLDto
+	for _, v := range records {
+		uRLDto := URLDto{
+			OriginalURL: v.OriginalURL,
+			ShortURL:    v.ShortURL,
+		}
+		uRLDtoSlice = append(uRLDtoSlice, uRLDto)
+	}
+	return uRLDtoSlice
+}
+
+type URLDto struct {
+	ShortURL    string `json:"short_url,omitempty"`
+	OriginalURL string `json:"original_url,omitempty"`
+}
+
 func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
+
 	if r.URL.Path != "/" {
 		http.Error(w, ErrIncorrectPostURL.Error(), http.StatusBadRequest)
+		return
+	}
+	user, err := getUser(r)
+	if err != nil && user != "" {
+		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
@@ -26,14 +78,17 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
 		return
 	}
-	url := string(body)
-	if isURLInvalid(url) {
+	incomingURL := string(body)
+	if isURLInvalid(incomingURL) {
 		http.Error(w, ErrIncorrectLongURL.Error(), http.StatusBadRequest)
 		return
 	}
-
 	genString := genString()
-	err = s.storage.Put(genString, url)
+	rec := storage.URLRecord{ID: genString,
+		ShortURL:    createURL(genString),
+		OriginalURL: incomingURL,
+		User:        storage.User{ID: user}}
+	err = s.storage.Put(genString, rec)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -43,7 +98,15 @@ func (s *Server) PostHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(createURL(genString)))
 }
 
-// TODO: Написать тест, проверить статус и хэдер
+func getUser(r *http.Request) (string, error) {
+	token, err := readCookie("token", r)
+	if err != nil {
+		return "", err
+	}
+	user := services.GetUserFromToken(token)
+	return user, nil
+}
+
 func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
@@ -56,11 +119,17 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Location", longURL)
+	w.Header().Set("Location", longURL.OriginalURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r)
+	if err != nil && user != "" {
+		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
+		return
+	}
+
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -75,7 +144,12 @@ func (s *Server) PostJSONHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	genString := genString()
-	err = s.storage.Put(genString, req.URL)
+	rec := storage.URLRecord{ID: genString,
+		ShortURL:    createURL(genString),
+		OriginalURL: req.URL,
+		User:        storage.User{ID: user}}
+
+	err = s.storage.Put(genString, rec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -102,9 +176,21 @@ type responseJSON struct {
 	ShortURL string `json:"result"`
 }
 
-// TODO: Написать тест
-func Middleware(next http.Handler) http.Handler {
+func (s *Server) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, err := getTokenCookie(r)
+		if err == nil && token != "" && services.VerifyToken(token) {
+			user := services.GetUserFromToken(token)
+			fmt.Println("existed user is ", user)
+		} else {
+			userName := genString()
+			fmt.Println("new user is ", userName)
+			encr := services.SignName(userName)
+			cookieString := hex.EncodeToString(append([]byte(userName), encr...))
+			cookie := http.Cookie{Name: services.AuthnCookieName, Value: cookieString}
+			http.SetCookie(w, &cookie)
+			r.AddCookie(&cookie)
+		}
 
 		if r.Header.Get(`Content-Encoding`) == `gzip` {
 			gz, err := gzip.NewReader(r.Body)
@@ -168,4 +254,19 @@ func isURLInvalid(s string) bool {
 
 func createURL(s string) string {
 	return services.AppConfig.BaseURLValue + "/" + s
+}
+func getTokenCookie(r *http.Request) (value string, err error) {
+	return readCookie(services.AuthnCookieName, r)
+}
+func readCookie(name string, r *http.Request) (value string, err error) {
+	if name == "" {
+		return value, errors.New("you are trying to read empty cookie")
+	}
+	cookie, err := r.Cookie(name)
+	if err != nil {
+		return value, err
+	}
+	str := cookie.Value
+	value, _ = url.QueryUnescape(str)
+	return value, err
 }
