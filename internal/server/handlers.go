@@ -19,11 +19,19 @@ import (
 	"go-url-shortener/internal/storage"
 )
 
+func (s *Server) GetPingHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.repo.PingConnection(s.ctx) {
+		http.Error(w, ErrPingConnection.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := getUser(r)
 
 	if err != nil || user == "" {
-		http.Error(w, ErrServer.Error(), http.StatusBadRequest)
+		http.Error(w, ErrServer.Error(), http.StatusInternalServerError)
 		return
 	}
 	records, err := s.storage.GetByUser(user)

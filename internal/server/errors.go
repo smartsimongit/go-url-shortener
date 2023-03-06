@@ -10,4 +10,5 @@ var (
 	ErrCreatedResponse      = errors.New("error created responseJson")
 	ErrReadBodyRequest      = errors.New("error read body request")
 	ErrServer               = errors.New("error server")
+	ErrPingConnection       = errors.New("connection ping error")
 )
