@@ -3,40 +3,40 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"sync"
 )
 
 var fileForSave string
+
+type Option func(store *InMemory)
 
 type InMemory struct {
 	lock sync.Mutex
 	m    map[string]URLRecord
 }
 
-func NewInMemory() *InMemory {
+func NewInMemory(options ...Option) *InMemory {
 	return &InMemory{
 		m: make(map[string]URLRecord),
 	}
 }
-func newInMemoryWithMap(innerM map[string]URLRecord) *InMemory {
-	return &InMemory{
-		m: innerM,
+
+func WithMap(innerM map[string]URLRecord) Option {
+	return func(store *InMemory) {
+		store.m = innerM
 	}
 }
-
-func NewInMemoryWithFile(fileName string) *InMemory {
+func WithFile(fileName string) Option {
 	if fileName == "" {
-		fmt.Println("Use storage without file saving")
-		return NewInMemory()
+		log.Info().Msg("Use storage without file saving")
+		return nil
 	}
-	fmt.Println("Use storage with file saving")
-
+	log.Info().Msg("Use storage with file saving")
 	fileForSave = fileName
-
 	shortURLs := restoreShortURLs(fileForSave)
 	m := createMapFromShortURLs(shortURLs)
-	return newInMemoryWithMap(m)
-
+	return WithMap(m)
 }
 
 func (s *InMemory) GetAll(ctx context.Context) map[string]URLRecord {
@@ -115,4 +115,7 @@ func (s *InMemory) PingConnection(ctx context.Context) bool {
 }
 func (s *InMemory) PutAll(records []URLRecord, ctx context.Context) error {
 	return nil
+}
+func (s *InMemory) GetByURL(url string, ctx context.Context) (URLRecord, error) {
+	return URLRecord{}, ErrNotFound
 }

@@ -44,14 +44,13 @@ func testPOSTResponse(t *testing.T, ts *httptest.Server, path string, body io.Re
 }
 
 func TestHandlers_PostHandlerStatusCreated(t *testing.T) {
-
-	storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue)
+	store := storage.NewInMemory(storage.WithFile(services.AppConfig.FileStorageURLValue))
 	name := "test #1 Test PostHandler Status Created"
 	sendedURL := "https://practicum.yandex.ru/"
 	expectedStatus := http.StatusCreated
 	path := "/"
 
-	server := New(context.Background(), storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
+	server := New(context.Background(), store)
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	r.HandleFunc("/", server.PostHandler)
@@ -216,7 +215,8 @@ func TestHandlers_PostJSONHandlerOKStatus(t *testing.T) {
 			},
 		},
 	}
-	server := New(context.Background(), storage.NewInMemoryWithFile(services.AppConfig.FileStorageURLValue))
+	store := storage.NewInMemory(storage.WithFile(services.AppConfig.FileStorageURLValue))
+	server := New(context.Background(), store)
 	r := mux.NewRouter()
 	ts := httptest.NewServer(r)
 	defer ts.Close()
