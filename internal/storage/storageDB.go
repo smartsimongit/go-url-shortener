@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
-	"go-url-shortener/internal/services"
 	"log"
 
 	"context"
@@ -13,8 +12,8 @@ import (
 
 func New(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 
-	url := services.AppConfig.DBAddressURL
-	//url := "postgres://postgres:postgres@localhost:5432/postgres"
+	//url := services.AppConfig.DBAddressURL
+	url := "postgres://postgres:postgres@localhost:5432/postgres"
 
 	if url == "" {
 		err = fmt.Errorf("failed to get url: %w", err)
@@ -59,7 +58,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) createTables() {
 	ctx := context.Background()
-	_, err := r.pool.Exec(ctx, "create table if not exists public.link_pairs(id varchar(64) primary key, short_url    varchar(64)  not null, original_url varchar(256) not null UNIQUE, usr varchar(64)  not null);")
+	_, err := r.pool.Exec(ctx, "create table if not exists public.link_pairs(id varchar(64) primary key, short_url    varchar(64)  not null, original_url varchar(256) not null UNIQUE, usr varchar(64)  not null, is_deleted boolean default 'FALSE');")
 	if err != nil {
 
 		fmt.Println("таблица не создалась ", err.Error())
@@ -74,7 +73,7 @@ func (r *Repository) Get(key string, ctx context.Context) (URLRecord, error) {
 	record := URLRecord{}
 
 	row := r.pool.QueryRow(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.id = $1",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.id = $1 AND public.is_deleted = false",
 		key)
 
 	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID)
@@ -89,7 +88,7 @@ func (r *Repository) GetByURL(url string, ctx context.Context) (URLRecord, error
 	record := URLRecord{}
 
 	row := r.pool.QueryRow(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.original_url = $1",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.original_url = $1 AND public.is_deleted = false",
 		url)
 
 	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID)
@@ -132,7 +131,7 @@ func (r *Repository) GetAll(ctx context.Context) map[string]URLRecord {
 func (r *Repository) GetByUser(usr string, ctx context.Context) ([]URLRecord, error) {
 	shortURLSlice := []URLRecord{}
 	rows, err := r.pool.Query(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.usr = $1",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.usr = $1 AND public.is_deleted = false",
 		usr)
 	if err != nil {
 		return nil, err
