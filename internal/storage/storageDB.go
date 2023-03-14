@@ -74,7 +74,7 @@ func (r *Repository) Get(key string, ctx context.Context) (URLRecord, error) {
 	record := URLRecord{}
 
 	row := r.pool.QueryRow(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.id = $1 AND public.is_deleted = false",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.id = $1 AND lp.is_deleted = false",
 		key)
 
 	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID)
@@ -89,7 +89,7 @@ func (r *Repository) GetByURL(url string, ctx context.Context) (URLRecord, error
 	record := URLRecord{}
 
 	row := r.pool.QueryRow(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.original_url = $1 AND public.is_deleted = false",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.original_url = $1 AND lp.is_deleted = false",
 		url)
 
 	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID)
@@ -132,7 +132,7 @@ func (r *Repository) GetAll(ctx context.Context) map[string]URLRecord {
 func (r *Repository) GetByUser(usr string, ctx context.Context) ([]URLRecord, error) {
 	shortURLSlice := []URLRecord{}
 	rows, err := r.pool.Query(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.usr = $1 AND public.is_deleted = false",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.usr = $1 AND lp.is_deleted = false",
 		usr)
 	if err != nil {
 		return nil, err
