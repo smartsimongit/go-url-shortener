@@ -164,6 +164,11 @@ func (r *Repository) PutAll(records []URLRecord, ctx context.Context) error {
 }
 
 func (r *Repository) Delete(ids []string, user string, ctx context.Context) error {
+	idsString := ""
+	for _, v := range ids {
+		idsString += ", " + v
+	}
+	fmt.Println("idsString is ", idsString)
 	_, err := r.pool.Exec(ctx,
 		"UPDATE public.link_pairs SET is_deleted = true WHERE id in ($1) AND usr = $2",
 		ids, user)
