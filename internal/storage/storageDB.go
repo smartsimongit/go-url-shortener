@@ -164,18 +164,25 @@ func (r *Repository) PutAll(records []URLRecord, ctx context.Context) error {
 }
 
 func (r *Repository) Delete(ids []string, user string, ctx context.Context) error {
-	idsString := ids[0]
-	for i := 1; i < len(ids); i++ {
-		idsString += ", " + ids[i]
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
 	}
-
-	fmt.Println("idsString is ", idsString)
-	_, err := r.pool.Exec(ctx,
-		"UPDATE public.link_pairs SET is_deleted = true WHERE id in ($1) AND usr = $2",
-		idsString, user)
+	defer tx.Rollback(ctx)
+	for i, v := range ids {
+		ids[i] = "'" + v + "'"
+	}
+	idsString := strings.Join(ids, ",")
+	fmt.Println("idsString ", idsString)
+	sqlStatement := "UPDATE public.link_pairs SET is_deleted = true WHERE id in (" + idsString + ");"
+	fmt.Println("sqlStatement ", sqlStatement)
+	_, err = r.pool.Exec(ctx,
+		sqlStatement)
+	//"UPDATE public.link_pairs SET is_deleted = true WHERE id in ($1) AND usr = $2",
+	//	idsString, user)
 	if err != nil {
 		fmt.Println("ошибка записи ", err.Error())
 		return err
 	}
-	return nil
+	return tx.Commit(ctx)
 }
