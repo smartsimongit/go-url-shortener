@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog/log"
+	"go-url-shortener/internal/services"
 
 	"context"
 	"errors"
@@ -10,8 +11,6 @@ import (
 	"net"
 	"strings"
 	"time"
-
-	"go-url-shortener/internal/services"
 )
 
 var (
@@ -187,12 +186,9 @@ func (r *Repository) Delete(ids []string, user string, ctx context.Context) erro
 	}
 	idsString := strings.Join(ids, ",")
 	fmt.Println("idsString ", idsString)
-	sqlStatement := "UPDATE public.link_pairs SET is_deleted = true WHERE id in (" + idsString + ");"
+	sqlStatement := "UPDATE public.link_pairs SET is_deleted = true WHERE id in (" + idsString + ") AND usr = $1;"
 	fmt.Println("sqlStatement ", sqlStatement)
-	_, err = r.pool.Exec(ctx,
-		sqlStatement)
-	//"UPDATE public.link_pairs SET is_deleted = true WHERE id in ($1) AND usr = $2",
-	//	idsString, user)
+	_, err = r.pool.Exec(ctx, sqlStatement, user)
 	if err != nil {
 		fmt.Println("ошибка записи ", err.Error())
 		return err
