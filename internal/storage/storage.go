@@ -17,6 +17,7 @@ type Storage interface {
 	GetByUser(usr string, ctx context.Context) ([]URLRecord, error)
 	PingConnection(ctx context.Context) bool
 	PutAll(records []URLRecord, ctx context.Context) error
+	Delete(req []string, user string, ctx context.Context) error
 	GetByURL(url string, ctx context.Context) (URLRecord, error)
 }
 

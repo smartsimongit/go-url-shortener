@@ -60,6 +60,8 @@ func (s *Server) DeleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 	} //TODO: DELETE!
 	ctx.Value("sdssdsd") //TODO: DELETE!
 
+	s.storage.Delete(req, user, ctx) //TODO: распараллелить
+
 	w.WriteHeader(http.StatusAccepted)
 }
 

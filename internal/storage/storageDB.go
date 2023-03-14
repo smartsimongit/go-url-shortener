@@ -162,3 +162,14 @@ func (r *Repository) PutAll(records []URLRecord, ctx context.Context) error {
 	}
 	return tx.Commit(ctx)
 }
+
+func (r *Repository) Delete(ids []string, user string, ctx context.Context) error {
+	_, err := r.pool.Exec(ctx,
+		"UPDATE public.link_pairs SET public.link_pairs.is_deleted = true WHERE id in (ids) AND usr = user VALUES($1,$2)",
+		ids, user)
+	if err != nil {
+		fmt.Println("ошибка записи ", err.Error())
+		return err
+	}
+	return nil
+}
