@@ -171,7 +171,7 @@ func (r *Repository) Delete(ids []string, user string, ctx context.Context) erro
 	fmt.Println("idsString is ", idsString)
 	_, err := r.pool.Exec(ctx,
 		"UPDATE public.link_pairs SET is_deleted = true WHERE id in ($1) AND usr = $2",
-		ids, user)
+		idsString, user)
 	if err != nil {
 		fmt.Println("ошибка записи ", err.Error())
 		return err
