@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 
@@ -28,6 +29,37 @@ func (s *Server) GetPingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) DeleteURLsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	user, err := getUser(r)
+	if err != nil || user == "" {
+		http.Error(w, ErrServer.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var req []string
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for i, num := range req { //TODO: DELETE!
+		fmt.Println("index:", i) //TODO: DELETE!
+		fmt.Println("val:", num) //TODO: DELETE!
+	} //TODO: DELETE!
+	ctx.Value("sdssdsd") //TODO: DELETE!
+
 }
 
 func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
