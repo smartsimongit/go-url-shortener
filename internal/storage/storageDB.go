@@ -2,17 +2,16 @@ package storage
 
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
-	"go-url-shortener/internal/services"
-	"log"
-	"strings"
+	"github.com/rs/zerolog/log"
 
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"strings"
 	"time"
+
+	"go-url-shortener/internal/services"
 )
 
 var (
@@ -25,6 +24,7 @@ func New(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 	//url := "postgres://postgres:postgres@localhost:5432/postgres"
 
 	if url == "" {
+
 		err = fmt.Errorf("failed to get url: %w", err)
 		return nil, err
 	}
@@ -70,8 +70,8 @@ func (r *Repository) createTables() {
 	_, err := r.pool.Exec(ctx, "create table if not exists public.link_pairs(id varchar(64) primary key, short_url    varchar(64)  not null, original_url varchar(256) not null UNIQUE, usr varchar(64)  not null, is_deleted boolean default 'FALSE');")
 	if err != nil {
 
-		fmt.Println("таблица не создалась ", err.Error())
-		log.Fatal(err)
+		log.Error().Msg("таблица не создалась ")
+		log.Fatal().Err(err)
 	}
 }
 func (r *Repository) PingConnection(ctx context.Context) bool {
