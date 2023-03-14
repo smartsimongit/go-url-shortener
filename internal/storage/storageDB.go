@@ -7,9 +7,16 @@ import (
 	"strings"
 
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"net"
+	"strings"
 	"time"
+)
+
+var (
+	ErrShortLinkIsDeleted = errors.New("this short link was deleted")
 )
 
 func New(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
@@ -75,14 +82,19 @@ func (r *Repository) Get(key string, ctx context.Context) (URLRecord, error) {
 	record := URLRecord{}
 
 	row := r.pool.QueryRow(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.id = $1 AND lp.is_deleted = false",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr, lp.is_deleted FROM public.link_pairs lp WHERE lp.id = $1",
 		key)
 
-	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID)
+	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID, &record.isDeleted)
 	if err != nil {
-		fmt.Println("ошибка чтения ", err.Error())
+
 		return record, err
 	}
+	if record.isDeleted {
+		fmt.Println("ошибка чтения ", ErrShortLinkIsDeleted.Error())
+		return record, ErrShortLinkIsDeleted
+	}
+
 	return record, err
 }
 

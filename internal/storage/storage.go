@@ -26,6 +26,7 @@ type URLRecord struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 	User        User   `json:"usr,omitempty"`
+	isDeleted   bool   `json:"-"`
 }
 
 type User struct {

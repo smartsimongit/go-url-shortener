@@ -175,6 +175,10 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	longURL, err := s.storage.Get(id, ctx)
+	if errors.Is(err, storage.ErrShortLinkIsDeleted) {
+		w.WriteHeader(http.StatusGone)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
