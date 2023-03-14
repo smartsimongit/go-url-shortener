@@ -60,6 +60,7 @@ func (s *Server) DeleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 	} //TODO: DELETE!
 	ctx.Value("sdssdsd") //TODO: DELETE!
 
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
