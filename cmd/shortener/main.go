@@ -28,7 +28,4 @@ func main() {
 	}
 	serv.AddRoutes(router)
 	log.Fatal().Err(http.ListenAndServe(services.AppConfig.ServerAddressValue, serv.Middleware(router)))
-
-	//	TODO: Фактический результат удаления может происходить позже
-	//	TODO: Используйте паттерн fanIn для максимального наполнения буфера объектов обновления.
 }
