@@ -1,14 +1,13 @@
 package server
 
 import (
-	"context"
-	"github.com/gorilla/mux"
-	"github.com/rs/zerolog/log"
-
 	"compress/gzip"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 	"io"
 	"math/rand"
 	"net/http"
@@ -55,8 +54,10 @@ func (s *Server) DeleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 
 	//	TODO: Фактический результат удаления может происходить позже
 	//	TODO: Используйте паттерн fanIn для максимального наполнения буфера объектов обновления.
-	s.storage.Delete(req, user, ctx) //TODO:
-
+	go func() {
+		log.Info().Msg("удаление")
+		s.storage.Delete(req, user, ctx) //TODO:
+	}()
 	w.WriteHeader(http.StatusAccepted)
 }
 
