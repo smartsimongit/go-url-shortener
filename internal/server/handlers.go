@@ -1,14 +1,13 @@
 package server
 
 import (
-	"context"
-	"github.com/gorilla/mux"
-	"github.com/rs/zerolog/log"
-
 	"compress/gzip"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 	"io"
 	"math/rand"
 	"net/http"
@@ -28,6 +27,38 @@ func (s *Server) GetPingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) DeleteURLsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	user, err := getUser(r)
+	if err != nil || user == "" {
+		http.Error(w, ErrServer.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, ErrIncorrectJSONRequest.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var req []string
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//	TODO: Фактический результат удаления может происходить позже
+	//	TODO: Используйте паттерн fanIn для максимального наполнения буфера объектов обновления.
+	go func() {
+		log.Info().Msg("удаление")
+		s.storage.Delete(req, user, ctx) //TODO:
+	}()
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (s *Server) GetUserURLsHandler(w http.ResponseWriter, r *http.Request) {
@@ -140,6 +171,10 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	longURL, err := s.storage.Get(id, ctx)
+	if errors.Is(err, storage.ErrShortLinkIsDeleted) {
+		w.WriteHeader(http.StatusGone)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

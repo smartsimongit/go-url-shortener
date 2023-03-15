@@ -12,12 +12,13 @@ type Server struct {
 }
 
 func (s *Server) AddRoutes(router *mux.Router) {
-	router.HandleFunc("/ping", s.GetPingHandler)
-	router.HandleFunc("/{id}", s.GetHandler)
-	router.HandleFunc("/", s.PostHandler)
-	router.HandleFunc("/api/shorten/batch", s.PostBatchURLsHandler)
-	router.HandleFunc("/api/shorten", s.PostJSONHandler)
-	router.HandleFunc("/api/user/urls", s.GetUserURLsHandler)
+	router.HandleFunc("/ping", s.GetPingHandler).Methods("GET")
+	router.HandleFunc("/{id}", s.GetHandler).Methods("GET")
+	router.HandleFunc("/", s.PostHandler).Methods("POST")
+	router.HandleFunc("/api/shorten/batch", s.PostBatchURLsHandler).Methods("POST")
+	router.HandleFunc("/api/shorten", s.PostJSONHandler).Methods("POST")
+	router.HandleFunc("/api/user/urls", s.DeleteURLsHandler).Methods("DELETE")
+	router.HandleFunc("/api/user/urls", s.GetUserURLsHandler).Methods("GET")
 
 }
 

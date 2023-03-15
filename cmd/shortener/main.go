@@ -28,5 +28,4 @@ func main() {
 	}
 	serv.AddRoutes(router)
 	log.Fatal().Err(http.ListenAndServe(services.AppConfig.ServerAddressValue, serv.Middleware(router)))
-
 }

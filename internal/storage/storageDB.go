@@ -2,13 +2,19 @@ package storage
 
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/rs/zerolog/log"
 	"go-url-shortener/internal/services"
-	"log"
 
 	"context"
+	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"time"
+)
+
+var (
+	ErrShortLinkIsDeleted = errors.New("this short link was deleted")
 )
 
 func New(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
@@ -17,6 +23,7 @@ func New(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 	//url := "postgres://postgres:postgres@localhost:5432/postgres"
 
 	if url == "" {
+
 		err = fmt.Errorf("failed to get url: %w", err)
 		return nil, err
 	}
@@ -59,11 +66,11 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) createTables() {
 	ctx := context.Background()
-	_, err := r.pool.Exec(ctx, "create table if not exists public.link_pairs(id varchar(64) primary key, short_url    varchar(64)  not null, original_url varchar(256) not null UNIQUE, usr varchar(64)  not null);")
+	_, err := r.pool.Exec(ctx, "create table if not exists public.link_pairs(id varchar(64) primary key, short_url    varchar(64)  not null, original_url varchar(256) not null UNIQUE, usr varchar(64)  not null, is_deleted boolean default 'FALSE');")
 	if err != nil {
 
-		fmt.Println("таблица не создалась ", err.Error())
-		log.Fatal(err)
+		log.Error().Msg("таблица не создалась ")
+		log.Fatal().Err(err)
 	}
 }
 func (r *Repository) PingConnection(ctx context.Context) bool {
@@ -74,14 +81,19 @@ func (r *Repository) Get(key string, ctx context.Context) (URLRecord, error) {
 	record := URLRecord{}
 
 	row := r.pool.QueryRow(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.id = $1",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr, lp.is_deleted FROM public.link_pairs lp WHERE lp.id = $1",
 		key)
 
-	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID)
+	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID, &record.isDeleted)
 	if err != nil {
-		fmt.Println("ошибка чтения ", err.Error())
+
 		return record, err
 	}
+	if record.isDeleted {
+		fmt.Println("ошибка чтения ", ErrShortLinkIsDeleted.Error())
+		return record, ErrShortLinkIsDeleted
+	}
+
 	return record, err
 }
 
@@ -89,7 +101,7 @@ func (r *Repository) GetByURL(url string, ctx context.Context) (URLRecord, error
 	record := URLRecord{}
 
 	row := r.pool.QueryRow(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.original_url = $1",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.original_url = $1 AND lp.is_deleted = false",
 		url)
 
 	err := row.Scan(&record.ID, &record.ShortURL, &record.OriginalURL, &record.User.ID)
@@ -132,7 +144,7 @@ func (r *Repository) GetAll(ctx context.Context) map[string]URLRecord {
 func (r *Repository) GetByUser(usr string, ctx context.Context) ([]URLRecord, error) {
 	shortURLSlice := []URLRecord{}
 	rows, err := r.pool.Query(ctx,
-		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.usr = $1",
+		"SELECT lp.id, lp.short_url, lp.original_url, lp.usr FROM public.link_pairs lp WHERE lp.usr = $1 AND lp.is_deleted = false",
 		usr)
 	if err != nil {
 		return nil, err
@@ -159,6 +171,27 @@ func (r *Repository) PutAll(records []URLRecord, ctx context.Context) error {
 		if _, err = r.pool.Exec(ctx, "INSERT INTO public.link_pairs (id, short_url, original_url, usr) VALUES($1,$2,$3,$4)", v.ID, v.ShortURL, v.OriginalURL, v.User.ID); err != nil {
 			return err
 		}
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *Repository) Delete(ids []string, user string, ctx context.Context) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	for i, v := range ids {
+		ids[i] = "'" + v + "'"
+	}
+	idsString := strings.Join(ids, ",")
+	fmt.Println("idsString ", idsString)
+	sqlStatement := "UPDATE public.link_pairs SET is_deleted = true WHERE id in (" + idsString + ") AND usr = $1;"
+	fmt.Println("sqlStatement ", sqlStatement)
+	_, err = r.pool.Exec(ctx, sqlStatement, user)
+	if err != nil {
+		fmt.Println("ошибка записи ", err.Error())
+		return err
 	}
 	return tx.Commit(ctx)
 }
